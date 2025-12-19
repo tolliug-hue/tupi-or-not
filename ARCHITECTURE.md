@@ -3,27 +3,28 @@
 ## 1. Schéma d'Architecture et Flux de Données
 
 Le projet suit une architecture **JAMstack** (JavaScript, APIs, Markup) optimisée par Next.js. Le flux de données est conçu pour maximiser la performance en chargeant les données une seule fois côté serveur.
-
 ```mermaid
-graph TD
-subgraph Server Side (Next.js)
-A[Google Sheets: Emissions/Playlists] -->|CSV Fetch| B(src/lib/data.ts: getEmissions)
-B --> C{Data Processing: Ligation, Tag/Genre Counting, searchableText Generation}
-C --> D[src/app/page.tsx: Server Component]
-end
+flowchart TD
+    %% Définition des styles (Classes)
+    classDef source fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef server fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef client fill:#ffc,stroke:#333,stroke-width:2px;
 
-subgraph Client Side (Browser)
-D --> E[src/context/SearchContext.tsx]
-E --> F[src/components/TagExplorer.tsx]
-E --> G[src/components/EmissionList.tsx]
-F -->|setSearchTerm| E
-G -->|useSearch| E
-G --> H[iFrames: Mixcloud/Archive.org]
-end
+    subgraph Server ["Server Side (Next.js)"]
+        %% :::source applique la classe 'source' au noeud A
+        A["Google Sheets: Emissions/Playlists"]:::source -->|CSV Fetch| B("src/lib/data.ts: getEmissions")
+        B --> C{"Data Processing:<br/>Ligation & Tag Counting"}
+        C --> D["src/app/page.tsx: Server Component"]:::server
+    end
 
-style A fill:#f9f,stroke:#333,stroke-width:2px
-style D fill:#ccf,stroke:#333,stroke-width:2px
-style E fill:#ffc,stroke:#333,stroke-width:2px
+    subgraph Client ["Client Side (Browser)"]
+        D --> E["src/context/SearchContext.tsx"]:::client
+        E --> F["src/components/TagExplorer.tsx"]
+        E --> G["src/components/EmissionList.tsx"]
+        F -->|setSearchTerm| E
+        G -->|useSearch| E
+        G --> H["iFrames: Mixcloud/Archive.org"]
+    end
 ```
 
 ## 2. Détail du Data Layer (`src/lib/data.ts`)
