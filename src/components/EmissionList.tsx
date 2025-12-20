@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Emission, PlaylistItem } from '@/lib/data';
+import { Emission, PlaylistItem } from '@/lib/types';
 import { useSearch } from '@/context/SearchContext';
 import Image from 'next/image';
 

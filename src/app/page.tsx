@@ -1,5 +1,6 @@
 // src/app/page.tsx
-import { getEmissions, Emission, GlobalTags } from '@/lib/data';
+import { getEmissions } from '@/lib/data';
+import { Emission, GlobalTags } from '@/lib/types';
 import EmissionList from '../components/EmissionList';
 import SearchBar from '../components/SearchBar';
 import TagExplorer from '@/components/TagExplorer';

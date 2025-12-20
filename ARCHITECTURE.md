@@ -27,16 +27,23 @@ flowchart TD
     end
 ```
 
-## 2. Détail du Data Layer (`src/lib/data.ts`)
+## 2. Détail du Data Layer (`src/lib/`)
 
-Ce fichier est le cœur de l'application. Il effectue les opérations suivantes :
+L'architecture de données a été découplée en deux fichiers distincts pour optimiser le poids du bundle envoyé au client (Tree Shaking) tout en conservant la logique métier côté serveur.
 
-*   **Fetch & Parsing :** Utilise `PapaParse` pour lire les deux liens CSV publics.
-*   **Ligation :** Lie les lignes de l'onglet `Playlists` aux émissions correspondantes via la colonne `Numéro`.
-*   **Agrégation :**
-    *   **`globalTags` :** Compte la fréquence de chaque Artiste (y compris les artistes multiples séparés par des virgules) pour le nuage de tags.
-    *   **`globalGenres` :** Compte la fréquence de chaque Genre (issu de la colonne `Genre` de la playlist) pour le nuage de genres.
-*   **Recherche :** Génère une chaîne de caractères unique (`searchableText`) pour chaque émission, incluant le Titre, la Date, l'Invité, les Artistes et les Genres. Cette chaîne est utilisée pour la recherche instantanée.
+*   **`src/lib/types.ts` (Universel & Léger) :**
+    *   Contient uniquement les définitions d'interfaces TypeScript (`Emission`, `PlaylistItem`, `GlobalTags`).
+    *   **Rôle :** Permet aux composants clients (`EmissionList`, `TagExplorer`) de typer les données sans importer de logique métier lourde.
+
+*   **`src/lib/data.ts` (Serveur Uniquement) :**
+    *   Contient la logique d'ingestion et les dépendances lourdes (`papaparse`).
+    *   **Fetch & Parsing :** Utilise `PapaParse` pour lire les deux liens CSV publics.
+    *   **Ligation :** Lie les lignes de l'onglet `Playlists` aux émissions correspondantes via la colonne `Numéro`.
+    *   **Agrégation :**
+        *   **`globalTags` :** Compte la fréquence de chaque Artiste pour le nuage de tags.
+        *   **`globalGenres` :** Compte la fréquence de chaque Genre pour le nuage de genres.
+    *   **Recherche :** Génère une chaîne de caractères unique (`searchableText`) pour chaque émission, incluant le Titre, la Date, l'Invité, les Artistes et les Genres.
+    *   **Sécurité :** Ce fichier n'est jamais importé côté client, garantissant que la librairie `papaparse` reste sur le serveur.
 
 ## 3. Stratégie de Performance et UX
 
@@ -46,15 +53,18 @@ Ce fichier est le cœur de l'application. Il effectue les opérations suivantes 
 *   **Gestion du DOM & TBT (Total Blocking Time) :**
     *   **Pagination Client-Side :** Seules les 12 premières émissions sont affichées au chargement ("Load More"). Cela divise par 6 le temps de calcul de mise en page (`Style & Layout`) du navigateur.
     *   **Rendu Conditionnel (Tags) :** Le contenu du `TagExplorer` (300+ boutons) n'est injecté dans le DOM que lorsque l'utilisateur ouvre l'accordéon, réduisant le poids initial de la page.
+*   **Optimisation Avancée du Bundle JS :**
+    *   **Tree Shaking :** Séparation stricte des types et de la logique de données.
+    *   **Modern Build :** Configuration de `browserslist` (`not IE 11`) et `tsconfig` (`ES2017`) pour éliminer les "Polyfills" et le "Legacy JavaScript", réduisant la charge CPU sur mobile.
+    *   **Config Next.js :** Utilisation de `transpilePackages` et `optimizePackageImports`.
 *   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio (Mixcloud/Archive) ne sont chargés que lorsque l'utilisateur clique sur la vignette, économisant énormément de bande passante.
 *   **Filtrage Efficace :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` change.
-*   **Optimisation du Bundle JS :** Configuration de `transpilePackages` et `optimizePackageImports` dans `next.config.ts` pour réduire la taille du JavaScript envoyé au client.
 *   **Accessibilité (A11y & WCAG) :**
     *   **Structure Sémantique :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
     *   **Contrastes :** Respect strict des ratios de contraste (Textes en `gray-600`, Badges en `orange-700`/`blue-700`) pour une lisibilité optimale.
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 
-*   **Typage (TypeScript) :** L'utilisation d'interfaces (`Emission`, `PlaylistItem`, `GlobalTags`) garantit la cohérence des données du début à la fin de l'application.
+*   **Typage (TypeScript) :** L'utilisation d'interfaces centralisées dans `types.ts` garantit la cohérence des données du début à la fin de l'application sans couplage fort.
 *   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
 *   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 2 secondes pour éviter de bloquer le build en cas de latence de l'API.

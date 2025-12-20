@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GlobalTags } from '@/lib/data';
+import { GlobalTags } from '@/lib/types';
 import { useSearch } from '@/context/SearchContext';
 
 // Définition des couleurs pour les tags

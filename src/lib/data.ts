@@ -1,34 +1,9 @@
 // src/lib/data.ts
 import Papa from 'papaparse';
+import { Emission, GlobalTags, PlaylistItem } from './types';
 
 const EMISSIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv';
 const PLAYLISTS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv';
-
-export interface PlaylistItem {
-  ordre: number;
-  startTime: string;
-  artiste: string;
-  titre: string;
-  proposePar: string;
-}
-
-export interface Emission {
-  id: string;
-  number: number;
-  title: string;
-  date: string;
-  link: string;
-  platform: 'mixcloud' | 'archive';
-  imageUrl: string | null;
-  playlist: PlaylistItem[];
-  searchableText: string;
-  genres: string[]; // Liste des genres pour l'affichage
-}
-
-export interface GlobalTags {
-    tag: string;
-    count: number;
-}
 
 // CORRECTION 1 : Retrait du hack Date.now()
 async function fetchCsv(url: string): Promise<any[]> {
