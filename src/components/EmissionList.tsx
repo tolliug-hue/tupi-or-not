@@ -4,6 +4,7 @@
 import { useState, useMemo } from 'react';
 import { Emission, PlaylistItem } from '@/lib/data';
 import { useSearch } from '@/context/SearchContext';
+import Image from 'next/image'; // NOUVEAU : Import du composant Image
 
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
@@ -18,7 +19,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setSelectedEmission(null);
   };
 
-  // --- LOGIQUE DE FILTRAGE ---
+  // --- LOGIQUE DE FILTRAGE (Inchangée) ---
   const filteredEmissions = useMemo(() => {
     if (!searchTerm) {
       return initialEmissions;
@@ -31,7 +32,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
   }, [initialEmissions, searchTerm]);
   // ---------------------------------------
 
-  // Composant PlaylistDisplay
+  // Composant PlaylistDisplay (Inchangé)
   const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
     const getGoogleSearchLink = (query: string) => {
       return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
@@ -100,16 +101,20 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 flex flex-col group"
           >
             {/* ZONE VISUELLE (Clic = Lecture) */}
-            <div 
-              className="aspect-square bg-gray-200 cursor-pointer overflow-hidden relative" 
+            {/* CORRECTION 1 : Remplacement de la DIV cliquable par un BUTTON pour l'accessibilité */}
+            <button 
+              className="aspect-square bg-gray-200 cursor-pointer overflow-hidden relative w-full" 
               onClick={() => setSelectedEmission(emission)}
             >
+              {/* CORRECTION 2 : Remplacement de IMG par le composant Image de Next.js */}
               {emission.imageUrl ? (
-                <img 
+                <Image 
                   src={emission.imageUrl} 
                   alt={emission.title}
+                  fill // Remplit le conteneur parent
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-600">
@@ -124,7 +129,14 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </svg>
                 </div>
               </div>
-            </div>
+              
+              {/* Badge Plateforme (Déplacé ici pour être au-dessus du bouton) */}
+              <span className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded text-white z-20 ${
+                emission.platform === 'archive' ? 'bg-blue-600' : 'bg-orange-600'
+              }`}>
+                {emission.platform === 'archive' ? 'ARCHIVE' : 'MIXCLOUD'}
+              </span>
+            </button>
 
             {/* TEXTE */}
             <div className="p-3 flex-1 flex flex-col">
@@ -132,11 +144,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 <div className="text-base font-bold text-gray-900">
                   {emission.date}
                 </div>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${
-                  emission.platform === 'archive' ? 'bg-blue-600' : 'bg-orange-600'
-                }`}>
-                  {emission.platform === 'archive' ? 'ARCHIVE' : 'MIXCLOUD'}
-                </span>
+                {/* Le badge est retiré d'ici car il est dans le bouton */}
               </div>
               <h2 className="text-base font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
                 {emission.title}
@@ -153,7 +161,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
           </article>
         ))}
         
-        {/* Message si aucune émission trouvée */}
+        {/* Message si aucune émission trouvée (Inchangé) */}
         {filteredEmissions.length === 0 && (
             <div className="col-span-full text-center py-12 text-gray-600">
                 <p className="text-xl font-semibold">Aucune émission trouvée pour "{searchTerm}".</p>
@@ -162,12 +170,12 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         )}
       </div>
 
-      {/* MODALE LECTEUR */}
+      {/* MODALE LECTEUR (Inchangé) */}
       {selectedEmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={closeModal}>
           <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             
-            {/* HEADER (Titre - Date) */}
+            {/* HEADER (Inchangé) */}
             <div className="bg-gray-100 p-4 flex justify-between items-start border-b sticky top-0 z-10">
               <h3 className="font-bold text-xl text-gray-900 leading-tight pr-4">
                   {selectedEmission.title} - {selectedEmission.date}
@@ -181,14 +189,15 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             {/* ZONE PLAYER UNIFIÉE */}
             <div className="bg-black flex flex-col justify-center items-center w-full">
               
-              {/* 1. L'IMAGE (Commune aux deux plateformes) */}
+              {/* 1. L'IMAGE (Remplacement de la DIV par un composant Image) */}
               {selectedEmission.imageUrl && (
                 <div className="w-full h-48 bg-black relative border-b border-gray-800">
-                  <img 
+                  <Image 
                     src={selectedEmission.imageUrl} 
                     alt={selectedEmission.title}
+                    fill
+                    className="object-contain"
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain"
                   />
                 </div>
               )}

@@ -5,12 +5,15 @@ import SearchBar from '../components/SearchBar';
 import TagExplorer from '@/components/TagExplorer';
 import Image from 'next/image';
 
+// Activation de l'ISR pour 1 heure (3600 secondes)
+export const revalidate = 3600; 
+
 export default async function Home() {
   const { emissions, globalTags, globalGenres } = await getEmissions();
 
   return (
     <main className="min-h-screen bg-gray-100 text-gray-900 font-sans">
-      {/* HEADER */}
+      {/* HEADER (Inchangé) */}
       <header 
         className="p-6 shadow-xl sticky top-0 z-40 border-b border-gray-700 text-white relative h-36 bg-black" 
       >

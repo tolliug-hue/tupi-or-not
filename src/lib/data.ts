@@ -30,8 +30,12 @@ export interface GlobalTags {
     count: number;
 }
 
+// CORRECTION 1 : Retrait du hack Date.now()
 async function fetchCsv(url: string): Promise<any[]> {
-    const res = await fetch(`${url}&t=${Date.now()}`, { cache: 'no-store' });
+    const res = await fetch(url); 
+    
+    if (!res.ok) throw new Error(`Erreur fetch CSV: ${res.statusText}`);
+
     const csvText = await res.text();
     return new Promise((resolve, reject) => {
         Papa.parse(csvText, {
@@ -51,8 +55,8 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
 
     const playlistsMap = new Map<number, PlaylistItem[]>();
     const searchableTextMap = new Map<number, string[]>();
-    const globalArtistCounts = new Map<string, number>(); // Compteur Artistes
-    const globalGenreCounts = new Map<string, number>(); // Compteur Genres
+    const globalArtistCounts = new Map<string, number>();
+    const globalGenreCounts = new Map<string, number>();
     const emissionGenresMap = new Map<number, Set<string>>();
 
     rawPlaylists.forEach((row: any) => {
@@ -68,7 +72,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             proposePar: row['Proposé par'] || '',
         };
         
-        // --- LOGIQUE GENRE DE LA PLAYLIST ---
+        // LOGIQUE GENRE
         const rawGenres = row['Genre'] || '';
         const genres = rawGenres.split(',').map((g: string) => g.trim()).filter((g: string) => g.length > 0);
         
@@ -77,11 +81,9 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         
         genres.forEach((genre: string) => {
             currentEmissionGenres.add(genre);
-            // Comptage global des genres
             const tag = genre.toLowerCase();
             globalGenreCounts.set(tag, (globalGenreCounts.get(tag) || 0) + 1);
         });
-        // ------------------------------------
 
         // Ajout à la playlist
         if (!playlistsMap.has(number)) playlistsMap.set(number, []);
@@ -141,7 +143,6 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 title += ` - Invité : ${invité}`;
             }
             
-            // Récupération des genres de l'émission
             const genres = Array.from(emissionGenresMap.get(number) || []);
 
             const playlistSearch = searchableTextMap.get(number)?.join(' ') || '';
@@ -163,26 +164,33 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         .filter((e): e is Emission => e !== null)
         .sort((a, b) => b.number - a.number);
 
-    // Récupération des images Mixcloud
-    const promises = finalEmissions.map(async (emission) => {
-        if (emission.platform === 'mixcloud' && !emission.imageUrl) {
+    // CORRECTION 2 : Sécurisation Mixcloud avec AbortController et Timeout
+    const finalEmissionsWithImages = await Promise.all(
+        finalEmissions.map(async (emission) => {
+            if (emission.platform !== 'mixcloud' || emission.imageUrl) {
+                return emission;
+            }
+
             try {
                 const oembedUrl = `https://www.mixcloud.com/oembed/?url=${encodeURIComponent(emission.link)}&format=json`;
-                const response = await fetch(oembedUrl);
+                
+                // Timeout de 2 secondes pour ne pas bloquer le build
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000); 
+
+                const response = await fetch(oembedUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.image) {
-                        emission.imageUrl = data.image;
-                    }
+                    if (data.image) emission.imageUrl = data.image;
                 }
             } catch (err) {
-                // Erreur silencieuse
+                // console.warn(`Impossible de récupérer l'image Mixcloud pour ${emission.id}`);
             }
-        }
-        return emission;
-    });
-
-    const finalEmissionsWithImages = await Promise.all(promises);
+            return emission;
+        })
+    );
     
     // Création du tableau de tags globaux (Artistes)
     const globalTags = Array.from(globalArtistCounts.entries())

@@ -40,13 +40,14 @@ Ce fichier est le cœur de l'application. Il effectue les opérations suivantes 
 
 ## 3. Stratégie de Performance et UX
 
-*   **Rendu Côté Serveur (SSR/SSG) :** La fonction `getEmissions` est `async` et est appelée dans le Server Component `page.tsx`. Cela signifie que la page HTML est générée avec toutes les données déjà incluses, garantissant un **Time To First Byte (TTFB)** très rapide.
-*   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio ne sont chargés que lorsque l'utilisateur clique sur la vignette (ouverture de la modale). Cela évite de charger 72 lecteurs au démarrage.
-*   **Filtrage Efficace :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` change. Cela garantit une recherche instantanée sans ralentissement.
-*   **UX Mobile (Accordéon) :** Le composant `TagExplorer` utilise un accordéon pour masquer les 300+ tags sur les petits écrans, libérant ainsi l'espace vertical.
+*   **Performance Critique (ISR) :** La page utilise l'**Incremental Static Regeneration** (`export const revalidate = 3600;`) pour mettre en cache les données pendant 1 heure. Cela résout le problème critique du **N+1** (multiples requêtes Mixcloud/Google Sheets) et garantit une performance constante en production.
+*   **Rendu Côté Serveur (SSR/SSG) :** La fonction `getEmissions` est appelée côté serveur pour un chargement initial très rapide.
+*   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio ne sont chargés que lorsque l'utilisateur clique sur la vignette.
+*   **Accessibilité (A11y) :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
+*   **Filtrage Efficace :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` change.
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 
 *   **Typage (TypeScript) :** L'utilisation d'interfaces (`Emission`, `PlaylistItem`, `GlobalTags`) garantit la cohérence des données du début à la fin de l'application.
-*   **Gestion d'État :** L'utilisation de `SearchContext` pour l'état global de la recherche est la méthode standard pour découpler les composants (la barre de recherche ne connaît pas la grille, et vice-versa).
-*   **Point de Vigilance (Cache) :** L'ajout de `&t=${Date.now()}` dans les requêtes CSV est une solution de contournement pour le cache agressif de Google. En production, il faut s'assurer que Vercel ne met pas en cache la page trop longtemps.
+*   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
+*   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 2 secondes pour éviter de bloquer le build en cas de latence de l'API.

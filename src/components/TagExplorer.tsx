@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GlobalTags } from '@/lib/data'; // CORRECTION : Utilisation de l'alias @/
+import { GlobalTags } from '@/lib/data';
 import { useSearch } from '@/context/SearchContext';
 
 // Définition des couleurs pour les tags
@@ -20,7 +20,7 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
   const activeTags = activeTab === 'artist' ? artistTags : genreTags;
   const colors = activeTab === 'artist' ? TAG_COLORS.ARTIST : TAG_COLORS.GENRE;
   
-  // Calcul de la taille de police (pour l'effet "nuage")
+  // Calcul de la taille de police
   const maxCount = activeTags.length > 0 ? activeTags[0].count : 1;
   
   const getFontSize = (count: number) => {
@@ -32,7 +32,7 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
     return `${Math.max(minSize, size)}rem`;
   };
 
-  // --- LOGIQUE DE CLIC SUR LES BOUTONS ---
+  // --- LOGIQUE DE CLIC ---
   const handleTabClick = (tab: 'artist' | 'genre') => {
     if (activeTab === tab) {
       setIsOpen(!isOpen);
@@ -41,7 +41,6 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
       setIsOpen(true);
     }
   };
-  // ------------------------------------------------
 
   // Composant de rendu du nuage
   const TagCloudContent = () => (
@@ -67,8 +66,12 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6">
       
-      {/* HEADER (Boutons de bascule et Toggle) */}
-      <div className="p-4 flex justify-between items-center border-b border-gray-200 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+      {/* HEADER */}
+      {/* CORRECTION : On remet une DIV ici pour éviter le "Button in Button" */}
+      <div 
+        className="p-4 flex justify-between items-center border-b border-gray-200 w-full cursor-pointer hover:bg-gray-50 transition-colors" 
+        onClick={() => setIsOpen(!isOpen)}
+      >
         
         {/* Boutons de Bascule (Tabs) */}
         <div className="flex space-x-2">
@@ -87,7 +90,17 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
         </div>
         
         {/* Icône de Toggle (Flèche) */}
-        <svg className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+        {/* CORRECTION : On met la flèche dans un bouton pour l'accessibilité clavier */}
+        <button 
+            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            onClick={(e) => {
+                e.stopPropagation(); // Évite de déclencher le clic de la div parent en double
+                setIsOpen(!isOpen);
+            }}
+            aria-label={isOpen ? "Réduire" : "Agrandir"}
+        >
+            <svg className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+        </button>
       </div>
 
       {/* CONTENU (Accordéon) */}
