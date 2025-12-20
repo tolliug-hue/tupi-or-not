@@ -4,10 +4,14 @@
 import { useState, useMemo } from 'react';
 import { Emission, PlaylistItem } from '@/lib/data';
 import { useSearch } from '@/context/SearchContext';
-import Image from 'next/image'; // NOUVEAU : Import du composant Image
+import Image from 'next/image';
 
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
+  
+  // 1. PERF : Pagination pour alléger le DOM initial (12 éléments)
+  const [visibleCount, setVisibleCount] = useState(12);
+  
   const { searchTerm } = useSearch();
 
   const getArchiveId = (link: string) => {
@@ -19,7 +23,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setSelectedEmission(null);
   };
 
-  // --- LOGIQUE DE FILTRAGE (Inchangée) ---
+  // --- LOGIQUE DE FILTRAGE ---
   const filteredEmissions = useMemo(() => {
     if (!searchTerm) {
       return initialEmissions;
@@ -30,9 +34,16 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       return emission.searchableText.includes(lowerCaseSearch);
     });
   }, [initialEmissions, searchTerm]);
-  // ---------------------------------------
 
-  // Composant PlaylistDisplay (Inchangé)
+  // 2. PERF : On coupe la liste pour n'afficher que les éléments visibles
+  const displayedEmissions = filteredEmissions.slice(0, visibleCount);
+
+  // Fonction pour charger plus d'émissions
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 12);
+  };
+
+  // Composant PlaylistDisplay
   const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
     const getGoogleSearchLink = (query: string) => {
       return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
@@ -72,16 +83,19 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                     <span className="text-gray-700">
                       {item.titre}
                     </span>
-                    {item.proposePar && <span className="text-gray-500 italic ml-1">({item.proposePar})</span>}
+                    {/* 3. A11Y : Contrastes renforcés (gray-600 au lieu de 500) */}
+                    {item.proposePar && <span className="text-gray-600 italic ml-1">({item.proposePar})</span>}
                   </div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 text-right font-mono">
+                  {/* 3. A11Y : Contrastes renforcés */}
+                  <div className="text-xs text-gray-600 flex-shrink-0 text-right font-mono">
                     {item.startTime}
                   </div>
                 </div>
 
                 <div className="mt-1 flex space-x-2 text-xs">
-                    <a href={getMusicBrainzRecordingLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900 hover:underline" title="Rechercher l'enregistrement sur MusicBrainz">[MusicBrainz]</a>
-                    <a href={getDiscogsSearchLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900 hover:underline" title="Rechercher sur Discogs (Marketplace)">[Discogs]</a>
+                    {/* 3. A11Y : Contrastes renforcés pour les liens */}
+                    <a href={getMusicBrainzRecordingLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher l'enregistrement sur MusicBrainz">[MusicBrainz]</a>
+                    <a href={getDiscogsSearchLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher sur Discogs (Marketplace)">[Discogs]</a>
                 </div>
               </li>
             ))}
@@ -95,26 +109,27 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     <>
       {/* GRILLE DES ÉMISSIONS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {filteredEmissions.map((emission) => (
+        
+        {displayedEmissions.map((emission, index) => (
           <article 
             key={emission.id} 
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 flex flex-col group"
           >
             {/* ZONE VISUELLE (Clic = Lecture) */}
-            {/* CORRECTION 1 : Remplacement de la DIV cliquable par un BUTTON pour l'accessibilité */}
             <button 
               className="aspect-square bg-gray-200 cursor-pointer overflow-hidden relative w-full" 
               onClick={() => setSelectedEmission(emission)}
             >
-              {/* CORRECTION 2 : Remplacement de IMG par le composant Image de Next.js */}
               {emission.imageUrl ? (
                 <Image 
                   src={emission.imageUrl} 
                   alt={emission.title}
-                  fill // Remplit le conteneur parent
+                  fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   referrerPolicy="no-referrer"
+                  // 4. PERF : Priorité LCP pour les 4 premières images
+                  priority={index < 4}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-600">
@@ -130,9 +145,9 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 </div>
               </div>
               
-              {/* Badge Plateforme (Déplacé ici pour être au-dessus du bouton) */}
+              {/* 5. A11Y : Badge Plateforme avec contraste renforcé (700 au lieu de 600) */}
               <span className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded text-white z-20 ${
-                emission.platform === 'archive' ? 'bg-blue-600' : 'bg-orange-600'
+                emission.platform === 'archive' ? 'bg-blue-700' : 'bg-orange-700'
               }`}>
                 {emission.platform === 'archive' ? 'ARCHIVE' : 'MIXCLOUD'}
               </span>
@@ -144,7 +159,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 <div className="text-base font-bold text-gray-900">
                   {emission.date}
                 </div>
-                {/* Le badge est retiré d'ici car il est dans le bouton */}
               </div>
               <h2 className="text-base font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
                 {emission.title}
@@ -161,7 +175,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
           </article>
         ))}
         
-        {/* Message si aucune émission trouvée (Inchangé) */}
+        {/* Message si aucune émission trouvée */}
         {filteredEmissions.length === 0 && (
             <div className="col-span-full text-center py-12 text-gray-600">
                 <p className="text-xl font-semibold">Aucune émission trouvée pour "{searchTerm}".</p>
@@ -170,12 +184,24 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         )}
       </div>
 
-      {/* MODALE LECTEUR (Inchangé) */}
+      {/* BOUTON "VOIR PLUS" */}
+      {visibleCount < filteredEmissions.length && (
+        <div className="mt-8 flex justify-center pb-8">
+          <button 
+            onClick={handleLoadMore}
+            className="px-6 py-3 bg-black text-white font-bold rounded-full hover:bg-gray-800 transition-colors shadow-lg"
+          >
+            Voir plus d'émissions ({filteredEmissions.length - visibleCount} restantes)
+          </button>
+        </div>
+      )}
+
+      {/* MODALE LECTEUR */}
       {selectedEmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={closeModal}>
           <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             
-            {/* HEADER (Inchangé) */}
+            {/* HEADER MODALE */}
             <div className="bg-gray-100 p-4 flex justify-between items-start border-b sticky top-0 z-10">
               <h3 className="font-bold text-xl text-gray-900 leading-tight pr-4">
                   {selectedEmission.title} - {selectedEmission.date}
@@ -189,7 +215,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             {/* ZONE PLAYER UNIFIÉE */}
             <div className="bg-black flex flex-col justify-center items-center w-full">
               
-              {/* 1. L'IMAGE (Remplacement de la DIV par un composant Image) */}
+              {/* IMAGE MODALE */}
               {selectedEmission.imageUrl && (
                 <div className="w-full h-48 bg-black relative border-b border-gray-800">
                   <Image 
@@ -202,7 +228,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 </div>
               )}
 
-              {/* 2. LE LECTEUR (Barre fine en bas) */}
+              {/* IFRAME LECTEUR */}
               {selectedEmission.platform === 'mixcloud' ? (
                 <iframe 
                   width="100%" 

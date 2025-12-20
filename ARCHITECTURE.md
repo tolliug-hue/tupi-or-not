@@ -41,10 +41,17 @@ Ce fichier est le cœur de l'application. Il effectue les opérations suivantes 
 ## 3. Stratégie de Performance et UX
 
 *   **Performance Critique (ISR) :** La page utilise l'**Incremental Static Regeneration** (`export const revalidate = 3600;`) pour mettre en cache les données pendant 1 heure. Cela résout le problème critique du **N+1** (multiples requêtes Mixcloud/Google Sheets) et garantit une performance constante en production.
-*   **Rendu Côté Serveur (SSR/SSG) :** La fonction `getEmissions` est appelée côté serveur pour un chargement initial très rapide.
-*   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio ne sont chargés que lorsque l'utilisateur clique sur la vignette.
-*   **Accessibilité (A11y) :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
+*   **Rendu Côté Serveur (SSR/SSG) :** La fonction `getEmissions` est appelée côté serveur pour un chargement initial très rapide des données brutes.
+*   **Optimisation du LCP (Largest Contentful Paint) :** Les 4 premières images de la grille utilisent la propriété `priority` de `next/image`. Elles sont préchargées par le navigateur, améliorant drastiquement la vitesse d'affichage perçue.
+*   **Gestion du DOM & TBT (Total Blocking Time) :**
+    *   **Pagination Client-Side :** Seules les 12 premières émissions sont affichées au chargement ("Load More"). Cela divise par 6 le temps de calcul de mise en page (`Style & Layout`) du navigateur.
+    *   **Rendu Conditionnel (Tags) :** Le contenu du `TagExplorer` (300+ boutons) n'est injecté dans le DOM que lorsque l'utilisateur ouvre l'accordéon, réduisant le poids initial de la page.
+*   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio (Mixcloud/Archive) ne sont chargés que lorsque l'utilisateur clique sur la vignette, économisant énormément de bande passante.
 *   **Filtrage Efficace :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` change.
+*   **Optimisation du Bundle JS :** Configuration de `transpilePackages` et `optimizePackageImports` dans `next.config.ts` pour réduire la taille du JavaScript envoyé au client.
+*   **Accessibilité (A11y & WCAG) :**
+    *   **Structure Sémantique :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
+    *   **Contrastes :** Respect strict des ratios de contraste (Textes en `gray-600`, Badges en `orange-700`/`blue-700`) pour une lisibilité optimale.
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 

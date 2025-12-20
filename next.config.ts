@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // 1. OPTIMISATION JS (Pour le score Lighthouse)
+  // Cela permet de réduire la taille du bundle envoyé au navigateur
+  transpilePackages: ['lucide-react'], 
+  
+  experimental: {
+    // Optimise les imports pour ne charger que ce qui est utilisé
+    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash'],
+  },
+
+  // 2. CONFIGURATION IMAGES (Inchangée)
   images: {
     remotePatterns: [
       {

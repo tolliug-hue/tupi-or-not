@@ -14,7 +14,9 @@ const TAG_COLORS = {
 export default function TagExplorer({ artistTags, genreTags }: { artistTags: GlobalTags[], genreTags: GlobalTags[] }) {
   const { setSearchTerm } = useSearch();
   const [activeTab, setActiveTab] = useState<'artist' | 'genre'>('artist');
-  const [isOpen, setIsOpen] = useState(true); 
+  
+  // 1. OPTIMISATION : Fermé par défaut pour alléger le chargement initial (LCP/TBT)
+  const [isOpen, setIsOpen] = useState(false); 
 
   // Détermine le jeu de tags et les couleurs actifs
   const activeTags = activeTab === 'artist' ? artistTags : genreTags;
@@ -34,9 +36,11 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
 
   // --- LOGIQUE DE CLIC ---
   const handleTabClick = (tab: 'artist' | 'genre') => {
+    // Si on clique sur l'onglet déjà actif, on toggle l'ouverture
     if (activeTab === tab) {
       setIsOpen(!isOpen);
     } else {
+      // Sinon on change d'onglet et on force l'ouverture
       setActiveTab(tab);
       setIsOpen(true);
     }
@@ -67,7 +71,7 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
     <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6">
       
       {/* HEADER */}
-      {/* CORRECTION : On remet une DIV ici pour éviter le "Button in Button" */}
+      {/* Structure DIV > BUTTON pour éviter l'erreur d'hydratation "Button in Button" */}
       <div 
         className="p-4 flex justify-between items-center border-b border-gray-200 w-full cursor-pointer hover:bg-gray-50 transition-colors" 
         onClick={() => setIsOpen(!isOpen)}
@@ -90,11 +94,10 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
         </div>
         
         {/* Icône de Toggle (Flèche) */}
-        {/* CORRECTION : On met la flèche dans un bouton pour l'accessibilité clavier */}
         <button 
             className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
             onClick={(e) => {
-                e.stopPropagation(); // Évite de déclencher le clic de la div parent en double
+                e.stopPropagation(); 
                 setIsOpen(!isOpen);
             }}
             aria-label={isOpen ? "Réduire" : "Agrandir"}
@@ -107,7 +110,9 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
         <div className="p-4">
           <div className="h-48 overflow-y-auto pr-2">
-            <TagCloudContent />
+            {/* 2. OPTIMISATION : Rendu conditionnel. 
+                Si c'est fermé, React ne génère pas les centaines de boutons dans le DOM. */}
+            {isOpen && <TagCloudContent />}
           </div>
         </div>
       </div>

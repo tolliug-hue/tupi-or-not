@@ -27,6 +27,7 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
 
 ### 2. Exploration Avancée
 
+*   **Navigation Fluide :** Chargement progressif des émissions (Pagination "Load More") pour une navigation rapide et réactive, même sur mobile
 *   **Recherche Instantanée :** Barre de recherche en haut de page pour filtrer en temps réel par **Artiste, Titre, Invité, Date, Numéro d'émission et Genre**.
 *   **Explorateur de Tags :** Bloc unique (Accordéon/Toggle) permettant de basculer entre le nuage des **Artistes** et le nuage des **Genres**.
 *   **Playlist Détaillée :** Affichage de la playlist complète dans la modale avec des liens d'exploration pour chaque titre :
