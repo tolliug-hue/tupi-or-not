@@ -157,14 +157,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
               <h2 className="text-base font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
                 {emission.title}
               </h2>
-              <a
-                href={emission.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto block w-full text-center bg-gray-100 text-gray-700 py-1.5 rounded hover:bg-gray-200 transition-colors text-xs font-bold border border-gray-200"
-              >
-                DÉTAILS
-              </a>
             </div>
           </article>
         ))}
