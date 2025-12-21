@@ -233,7 +233,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   width="100%"
                   height="60"
                   // SUPPRIMÉ : frameBorder="0"
-                  allow="encrypted-media; fullscreen; picture-in-picture"
+                  allow="encrypted-media; fullscreen; autoplay; picture-in-picture"
                   // AJOUT : border-0 dans les classes
                   className="bg-black border-0"
                 ></iframe>
