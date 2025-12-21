@@ -62,6 +62,7 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 *   **Accessibilité (A11y & WCAG) :**
     *   **Structure Sémantique :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
     *   **Contrastes :** Respect strict des ratios de contraste (Textes en `gray-600`, Badges en `orange-700`/`blue-700`) pour une lisibilité optimale.
+*   **Compatibilité Mobile (Player) :** Désactivation de l'autoplay sur les iframes tiers pour assurer un rendu graphique correct du widget Mixcloud sur iOS/Android et respecter les contraintes d'économie de données.
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 

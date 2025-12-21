@@ -23,7 +23,7 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
 *   **Accès :** Un clic sur la vignette de l'émission ouvre une modale de lecture.
 *   **Lecteur :** Le site utilise le lecteur natif de **Mixcloud** (pour les anciennes émissions) ou d'**Archive.org** (pour les récentes).
 *   **Design :** Le lecteur est présenté de manière uniforme : une image de l'émission au centre, surmontant une barre de contrôle audio compacte.
-*   **Autoplay :** L'autoplay est forcé au lancement de la modale.
+*   **Lecture :** Le lancement de la lecture est manuel (Click-to-Play) pour garantir la compatibilité avec les navigateurs mobiles et éviter les bugs d'affichage (politiques anti-autoplay).
 
 ### 2. Exploration Avancée
 
