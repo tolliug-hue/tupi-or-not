@@ -74,3 +74,11 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 *   **Typage (TypeScript) :** L'utilisation d'interfaces centralisées dans `types.ts` garantit la cohérence des données du début à la fin de l'application sans couplage fort.
 *   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
 *   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 2 secondes pour éviter de bloquer le build en cas de latence de l'API.
+
+## 5. Infrastructure & Déploiement
+
+*   **Hébergement :** Vercel (Edge Network) pour une distribution mondiale et une latence minimale.
+*   **Domaine :** `tupiornot.fr` (Registrar: OVHcloud).
+*   **Gestion DNS :** Délégation des Nameservers vers Vercel pour une propagation rapide et une gestion simplifiée.
+*   **Sécurité (SSL) :** Certificats HTTPS générés et renouvelés automatiquement par Vercel (Let's Encrypt).
+*   **Redirection :** Le sous-domaine `www` redirige automatiquement vers le domaine racine (308 Permanent Redirect) pour consolider le SEO.
