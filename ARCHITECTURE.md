@@ -19,6 +19,8 @@ flowchart TD
 
     subgraph Client ["Client Side (Browser)"]
         D --> E["src/context/SearchContext.tsx"]:::client
+        D --> I["src/components/MobileMenu.tsx (Drawer)"]:::client
+        D --> J["src/components/AboutModal.tsx"]:::client
         E --> F["src/components/TagExplorer.tsx"]
         E --> G["src/components/EmissionList.tsx"]
         F -->|setSearchTerm| E
@@ -63,6 +65,9 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
     *   **Structure Sémantique :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
     *   **Contrastes :** Respect strict des ratios de contraste (Textes en `gray-600`, Badges en `orange-700`/`blue-700`) pour une lisibilité optimale.
 *   **Compatibilité Mobile (Player) :** Désactivation de l'autoplay sur les iframes tiers pour assurer un rendu graphique correct du widget Mixcloud sur iOS/Android et respecter les contraintes d'économie de données.
+*   **Navigation Adaptative (Responsive Design) :**
+    *   **Desktop :** Header statique optimisé pour l'accès rapide.
+    *   **Mobile :** Architecture "Off-Canvas" (Menu Tiroir) via le composant `MobileMenu` pour maximiser l'espace écran disponible tout en gardant les fonctionnalités accessibles.
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 
