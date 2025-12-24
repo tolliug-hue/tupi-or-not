@@ -14,6 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icon', // Next.js sert automatiquement le fichier src/app/icon.png ici
         sizes: 'any',
         type: 'image/png',
+        purpose: 'any maskable' as any,
       },
     ],
   };
