@@ -7,14 +7,20 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "L'émission qui mange toutes les musiques",
     start_url: '/',
     display: 'standalone',
-    background_color: '#000000', // Noir (Identité Tupi)
-    theme_color: '#000000',      // Noir
+    background_color: '#000000',
+    theme_color: '#000000',
     icons: [
       {
-        src: '/icon', // Next.js sert automatiquement le fichier src/app/icon.png ici
-        sizes: 'any',
+        src: '/icon-v3.png', // Nouveau nom
+        sizes: '512x512',    // On précise la taille exacte (mieux que 'any')
         type: 'image/png',
-        purpose: 'any maskable' as any,
+        purpose: 'any',      // Usage standard (carré)
+      },
+      {
+        src: '/icon-v3.png', // La même image
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable', // Usage adaptatif (Rond/Goutte/etc.)
       },
     ],
   };
