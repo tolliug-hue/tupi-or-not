@@ -11,11 +11,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#000000',
     icons: [
       {
-        src: '/icon-final.png', // On garde ton image actuelle
+        src: '/icon.png',
         sizes: '512x512',
         type: 'image/png',
-        // RETOUR AU STANDARD W3C :
-        // On dit : "Cette image sert à tout (any) ET elle est découpable (maskable)"
         purpose: 'any maskable' as any, 
       },
     ],
