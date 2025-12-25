@@ -11,16 +11,16 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#000000',
     icons: [
       {
-        src: '/icon-v3.png', // Nouveau nom
-        sizes: '512x512',    // On précise la taille exacte (mieux que 'any')
+        src: '/icon-final.png', // NOUVEAU NOM
+        sizes: 'any',           // On remet 'any' pour être sûr
         type: 'image/png',
-        purpose: 'any',      // Usage standard (carré)
+        purpose: 'any',         // Pour les contextes normaux
       },
       {
-        src: '/icon-v3.png', // La même image
-        sizes: '512x512',
+        src: '/icon-final.png', // NOUVEAU NOM
+        sizes: 'any',
         type: 'image/png',
-        purpose: 'maskable', // Usage adaptatif (Rond/Goutte/etc.)
+        purpose: 'maskable',    // C'est ça que Lawnchair doit voir !
       },
     ],
   };
