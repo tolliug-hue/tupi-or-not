@@ -11,16 +11,12 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#000000',
     icons: [
       {
-        src: '/icon-final.png', // NOUVEAU NOM
-        sizes: 'any',           // On remet 'any' pour être sûr
+        src: '/icon-final.png', // On garde ton image actuelle
+        sizes: '512x512',
         type: 'image/png',
-        purpose: 'any',         // Pour les contextes normaux
-      },
-      {
-        src: '/icon-final.png', // NOUVEAU NOM
-        sizes: 'any',
-        type: 'image/png',
-        purpose: 'maskable',    // C'est ça que Lawnchair doit voir !
+        // RETOUR AU STANDARD W3C :
+        // On dit : "Cette image sert à tout (any) ET elle est découpable (maskable)"
+        purpose: 'any maskable' as any, 
       },
     ],
   };
