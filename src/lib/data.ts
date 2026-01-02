@@ -5,12 +5,9 @@ import { Emission, GlobalTags, PlaylistItem } from './types';
 const EMISSIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv';
 const PLAYLISTS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv';
 
-// CORRECTION 1 : Retrait du hack Date.now()
 async function fetchCsv(url: string): Promise<any[]> {
     const res = await fetch(url); 
-    
     if (!res.ok) throw new Error(`Erreur fetch CSV: ${res.statusText}`);
-
     const csvText = await res.text();
     return new Promise((resolve, reject) => {
         Papa.parse(csvText, {
@@ -34,6 +31,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
     const globalGenreCounts = new Map<string, number>();
     const emissionGenresMap = new Map<number, Set<string>>();
 
+    // 1. Traitement des Playlists (Inchangé)
     rawPlaylists.forEach((row: any) => {
         const rawNum = row['Emission'] || '';
         const number = parseInt(rawNum.toString().replace(/\D/g, '')) || 0;
@@ -47,7 +45,6 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             proposePar: row['Proposé par'] || '',
         };
         
-        // LOGIQUE GENRE
         const rawGenres = row['Genre'] || '';
         const genres = rawGenres.split(',').map((g: string) => g.trim()).filter((g: string) => g.length > 0);
         
@@ -60,15 +57,12 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             globalGenreCounts.set(tag, (globalGenreCounts.get(tag) || 0) + 1);
         });
 
-        // Ajout à la playlist
         if (!playlistsMap.has(number)) playlistsMap.set(number, []);
         playlistsMap.get(number)!.push(item);
 
-        // Ajout au texte de recherche
         if (!searchableTextMap.has(number)) searchableTextMap.set(number, []);
         searchableTextMap.get(number)!.push(item.artiste, item.titre);
 
-        // LOGIQUE TAGS GLOBAUX (Artistes)
         if (item.artiste) {
             const artistes = item.artiste.split(',').map(a => a.trim()).filter(a => a.length > 0);
             artistes.forEach(artiste => {
@@ -78,6 +72,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         }
     });
 
+    // 2. Traitement des Émissions
     const finalEmissions: Emission[] = rawEmissions
         .map((row: any) => {
             const rawNum = row['Numéro'] || '';
@@ -106,11 +101,21 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                     link = `https://www.mixcloud.com/olivier-guillot2/tupi-or-not-${number}-${dateSlug}/`;
                 }
             }
+            
+            // --- NOUVELLE LOGIQUE D'IMAGE DIRECTE ---
             let imageUrl = null;
+            
             if (platform === 'archive') {
                 const archiveId = link.split('/').pop();
-                if (archiveId) imageUrl = `https://archive.org/services/img/${archiveId}`;
+                // CONSTRUCTION DIRECTE DE L'URL HD
+                // Hypothèse : Le fichier s'appelle toujours "TupiXX_itemimage.jpg"
+                // Pas d'appel API, c'est instantané.
+                if (archiveId) {
+                    const filename = `Tupi${number}_itemimage.jpg`;
+                    imageUrl = `https://archive.org/download/${archiveId}/${filename}`;
+                }
             }
+            // ----------------------------------------
 
             let title = `Émission #${number}`;
             const invité = row['Invité'] || '';
@@ -119,7 +124,6 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             }
             
             const genres = Array.from(emissionGenresMap.get(number) || []);
-
             const playlistSearch = searchableTextMap.get(number)?.join(' ') || '';
             const searchableText = `${title} ${rawDate} ${invité} ${genres.join(' ')} ${playlistSearch}`.toLowerCase();
 
@@ -139,40 +143,39 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         .filter((e): e is Emission => e !== null)
         .sort((a, b) => b.number - a.number);
 
-    // CORRECTION 2 : Sécurisation Mixcloud avec AbortController et Timeout
+    // 3. RÉCUPÉRATION ASYNCHRONE (Uniquement pour Mixcloud maintenant)
+    // On n'a plus besoin de batching complexe car on ne traite que les quelques émissions Mixcloud
     const finalEmissionsWithImages = await Promise.all(
         finalEmissions.map(async (emission) => {
-            if (emission.platform !== 'mixcloud' || emission.imageUrl) {
-                return emission;
-            }
+            
+            // Seul Mixcloud a besoin d'un fetch pour trouver son image
+            if (emission.platform === 'mixcloud' && !emission.imageUrl) {
+                try {
+                    const oembedUrl = `https://www.mixcloud.com/oembed/?url=${encodeURIComponent(emission.link)}&format=json`;
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000); 
+                    
+                    const response = await fetch(oembedUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
 
-            try {
-                const oembedUrl = `https://www.mixcloud.com/oembed/?url=${encodeURIComponent(emission.link)}&format=json`;
-                
-                // Timeout de 2 secondes pour ne pas bloquer le build
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000); 
-
-                const response = await fetch(oembedUrl, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.image) emission.imageUrl = data.image;
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.image) emission.imageUrl = data.image;
+                    }
+                } catch (err) {
+                    // Erreur silencieuse
                 }
-            } catch (err) {
-                // console.warn(`Impossible de récupérer l'image Mixcloud pour ${emission.id}`);
             }
+            // Pour Archive, l'URL est déjà construite plus haut, on ne fait rien.
+
             return emission;
         })
     );
     
-    // Création du tableau de tags globaux (Artistes)
     const globalTags = Array.from(globalArtistCounts.entries())
         .map(([tag, count]) => ({ tag, count }))
         .sort((a, b) => b.count - a.count); 
         
-    // Création du tableau de tags globaux (Genres)
     const globalGenres = Array.from(globalGenreCounts.entries())
         .map(([tag, count]) => ({ tag, count }))
         .sort((a, b) => b.count - a.count);

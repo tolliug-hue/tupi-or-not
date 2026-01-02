@@ -104,7 +104,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
   return (
     <>
       {/* GRILLE DES ÉMISSIONS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
 
         {displayedEmissions.map((emission, index) => (
           <article
@@ -140,21 +140,16 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </svg>
                 </div>
               </div>
-
-              <span className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded text-white z-20 ${emission.platform === 'archive' ? 'bg-blue-700' : 'bg-orange-700'
-                }`}>
-                {emission.platform === 'archive' ? 'ARCHIVE' : 'MIXCLOUD'}
-              </span>
             </button>
 
             {/* TEXTE */}
-            <div className="p-3 flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-1">
-                <div className="text-base font-bold text-gray-900">
+            <div className="px-2 py-1 flex-1 flex flex-col">
+              <div className="flex justify-between items-center mb-0.5">
+                <div className="text-xs font-bold text-gray-900">
                   {emission.date}
                 </div>
               </div>
-              <h2 className="text-base font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2">
                 {emission.title}
               </h2>
             </div>
@@ -185,73 +180,81 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       {/* MODALE LECTEUR */}
       {selectedEmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={closeModal}>
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
 
-            {/* HEADER MODALE */}
-            <div className="bg-gray-100 p-4 flex justify-between items-start border-b sticky top-0 z-10">
-              <h3 className="font-bold text-xl text-gray-900 leading-tight pr-4">
+          {/* CONTENEUR PRINCIPAL : Flex Column + Overflow Hidden pour préserver les coins arrondis */}
+          <div
+            className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            {/* 1. HEADER (Fixe) */}
+            <div className="bg-gray-100 px-4 py-1 flex justify-between items-center border-b flex-shrink-0 z-10">
+              <h3 className="font-bold text-lg text-gray-900 leading-tight pr-4">
                 {selectedEmission.title} - {selectedEmission.date}
               </h3>
 
-              <button onClick={closeModal} className="text-gray-500 hover:text-red-600 p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors flex-shrink-0">
+              <button onClick={closeModal} className="text-gray-500 hover:text-red-600 p-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors flex-shrink-0">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            {/* ZONE PLAYER UNIFIÉE */}
-            <div className="bg-black flex flex-col justify-center items-center w-full">
+            {/* 2. ZONE SCROLLABLE (Player + Playlist) */}
+            <div className="overflow-y-auto flex-1 bg-white">
 
-              {/* IMAGE MODALE */}
-              {selectedEmission.imageUrl && (
-                <div className="w-full h-48 bg-black relative border-b border-gray-800">
-                  <Image
-                    src={selectedEmission.imageUrl}
-                    alt={selectedEmission.title}
-                    fill
-                    className="object-contain"
-                    referrerPolicy="no-referrer"
-                  />
+              {/* ZONE PLAYER UNIFIÉE */}
+              <div className="bg-black flex flex-col justify-center items-center w-full">
+
+                {/* IMAGE MODALE */}
+                {selectedEmission.imageUrl && (
+                  <div className="w-full h-48 bg-black relative border-b border-gray-800">
+                    <Image
+                      src={selectedEmission.imageUrl}
+                      alt={selectedEmission.title}
+                      fill
+                      className="object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
+                {/* ZONE LECTEUR (Conteneur de 60px centré) */}
+                <div className="w-full h-[60px] flex items-center justify-center bg-black">
+
+                  {selectedEmission.platform === 'mixcloud' ? (
+                    <iframe
+                      width="100%"
+                      height="60"
+                      src={`https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&hide_artwork=1&feed=${encodeURIComponent(selectedEmission.link)}`}
+                      allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share"
+                      className="bg-black border-0"
+                    ></iframe>
+                  ) : (
+                    <iframe
+                      src={`https://archive.org/embed/${getArchiveId(selectedEmission.link)}`}
+                      width="100%"
+                      height="30"
+                      allow="encrypted-media; fullscreen; autoplay; picture-in-picture"
+                      className="bg-black border-0"
+                    ></iframe>
+                  )}
+
                 </div>
-              )}
+              </div>
 
-              {/* IFRAME LECTEUR */}
-              {selectedEmission.platform === 'mixcloud' ? (
-                <iframe
-                  width="100%"
-                  height="60"
-                  // MISE A JOUR : Code officiel Mixcloud sans autoplay
-                  src={`https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&hide_artwork=1&feed=${encodeURIComponent(selectedEmission.link)}`}
-                  // SUPPRIMÉ : frameBorder="0"
-                  allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share"
-                  // AJOUT : border-0 dans les classes
-                  className="bg-black border-0"
-                ></iframe>
-              ) : (
-                <iframe
-                  // MISE A JOUR : Suppression de &autoplay=1
-                  src={`https://archive.org/embed/${getArchiveId(selectedEmission.link)}`}
-                  width="100%"
-                  height="60"
-                  // SUPPRIMÉ : frameBorder="0"
-                  allow="encrypted-media; fullscreen; autoplay; picture-in-picture"
-                  // AJOUT : border-0 dans les classes
-                  className="bg-black border-0"
-                ></iframe>
-              )}
+              {/* PLAYLIST */}
+              <PlaylistDisplay playlist={selectedEmission.playlist} />
             </div>
 
-            {/* PLAYLIST */}
-            <PlaylistDisplay playlist={selectedEmission.playlist} />
-
-            {/* Footer */}
-            <div className="p-4 text-center bg-gray-50 text-sm border-t sticky bottom-0 z-10">
+            {/* 3. FOOTER (Fixe) */}
+            <div className="p-4 text-center bg-gray-50 text-sm border-t flex-shrink-0 z-10">
               <a href={selectedEmission.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                 Voir la page originale sur {selectedEmission.platform === 'archive' ? 'Archive.org' : 'Mixcloud'}
               </a>
             </div>
+
           </div>
         </div>
       )}
     </>
   );
-}
+}      

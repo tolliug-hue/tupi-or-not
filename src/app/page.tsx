@@ -76,7 +76,7 @@ export default async function Home() {
       </header>
 
       {/* EXPLORATEUR DE TAGS */}
-      <div className="max-w-7xl mx-auto p-6 pt-4 sticky top-[74px] z-30 bg-gray-100 transition-all">
+      <div className="max-w-7xl mx-auto p-6 pt-4 -mt-4 pb-2 sticky top-[132px] md:top-[74px] z-30 bg-gray-100 transition-all">
         <TagExplorer 
             artistTags={globalTags} 
             genreTags={globalGenres} 
@@ -84,7 +84,7 @@ export default async function Home() {
       </div>
 
       {/* CORPS DE PAGE */}
-      <div className="max-w-7xl mx-auto p-6 pt-0 mt-2">
+      <div className="max-w-7xl mx-auto px-6 pb-6 pt-1 mt-0">
         <EmissionList initialEmissions={emissions} />
       </div>
     </main>

@@ -26,8 +26,8 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
   const maxCount = activeTags.length > 0 ? activeTags[0].count : 1;
   
   const getFontSize = (count: number) => {
-    const minSize = 1.0; 
-    const maxSize = 1.8; 
+    const minSize = 0.75; 
+    const maxSize = 1.5; 
     if (maxCount === 1) return `${minSize}rem`; 
     const ratio = (count - 1) / (maxCount - 1);
     const size = minSize + (maxSize - minSize) * ratio;
@@ -48,7 +48,7 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
 
   // Composant de rendu du nuage
   const TagCloudContent = () => (
-    <div className="flex flex-wrap gap-x-3 gap-y-2">
+    <div className="flex flex-wrap gap-1">
       {activeTags.map((item, index) => (
         item.tag.length > 0 && (
           <button
@@ -68,12 +68,12 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6">
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       
       {/* HEADER */}
       {/* Structure DIV > BUTTON pour éviter l'erreur d'hydratation "Button in Button" */}
       <div 
-        className="p-4 flex justify-between items-center border-b border-gray-200 w-full cursor-pointer hover:bg-gray-50 transition-colors" 
+        className="p-2 flex justify-between items-center border-b border-gray-200 w-full cursor-pointer hover:bg-gray-50 transition-colors" 
         onClick={() => setIsOpen(!isOpen)}
       >
         
@@ -81,13 +81,13 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
         <div className="flex space-x-2">
           <button 
             onClick={(e) => { e.stopPropagation(); handleTabClick('artist'); }}
-            className={`text-lg font-bold px-3 py-1 rounded transition-colors ${activeTab === 'artist' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`text-sm font-bold px-3 py-1 rounded transition-colors ${activeTab === 'artist' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             Explorer par Artiste
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleTabClick('genre'); }}
-            className={`text-lg font-bold px-3 py-1 rounded transition-colors ${activeTab === 'genre' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`text-sm font-bold px-3 py-1 rounded transition-colors ${activeTab === 'genre' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             Explorer par Genre
           </button>
@@ -108,8 +108,8 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
 
       {/* CONTENU (Accordéon) */}
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
-        <div className="p-4">
-          <div className="h-48 overflow-y-auto pr-2">
+        <div className="p-2">
+          <div className="h-32 md:h-48 overflow-y-auto pr-1">
             {/* 2. OPTIMISATION : Rendu conditionnel. 
                 Si c'est fermé, React ne génère pas les centaines de boutons dans le DOM. */}
             {isOpen && <TagCloudContent />}
