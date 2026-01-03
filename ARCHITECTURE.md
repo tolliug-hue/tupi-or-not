@@ -47,7 +47,7 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
     *   **Gestion des Images (Stratégie Hybride) :**
         *   **Mixcloud :** Récupération via l'API oEmbed (avec Timeout sécurisé).
         *   **Archive.org (Optimisé) :** Construction **déterministe** des URLs d'images HD basée sur une convention de nommage stricte (`Tupi{XX}_itemimage.jpg`). Cela supprime la dépendance à l'API de métadonnées d'Archive.org, rendant le build quasi-instantané.
-    *   **Recherche :** Génère une chaîne de caractères unique (`searchableText`) pour chaque émission, incluant le Titre, la Date, l'Invité, les Artistes et les Genres. Cette chaîne est utilisée pour la recherche instantanée.
+    *   **Recherche :** Génère une chaîne de caractères unique (`searchableText`) pour chaque émission, incluant le Titre, la Date, l'Invité, le Thème, les Artistes et les Genres. Cette chaîne est utilisée pour la recherche instantanée.
     *   **Sécurité :** Ce fichier n'est jamais importé côté client, garantissant que la librairie `papaparse` reste sur le serveur.
 
 ## 3. Stratégie de Performance et UX

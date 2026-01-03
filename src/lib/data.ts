@@ -122,10 +122,10 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             if (invité) {
                 title += ` - Invité : ${invité}`;
             }
-            
+            const theme = row['Theme'] || '';
             const genres = Array.from(emissionGenresMap.get(number) || []);
             const playlistSearch = searchableTextMap.get(number)?.join(' ') || '';
-            const searchableText = `${title} ${rawDate} ${invité} ${genres.join(' ')} ${playlistSearch}`.toLowerCase();
+            const searchableText = `${title} ${rawDate} ${invité} ${theme} ${genres.join(' ')} ${playlistSearch}`.toLowerCase();
 
             return {
                 id: number.toString(),
@@ -138,6 +138,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 playlist: playlistsMap.get(number)?.sort((a, b) => a.ordre - b.ordre) || [],
                 searchableText: searchableText,
                 genres: genres,
+                theme: theme,
             } as Emission;
         })
         .filter((e): e is Emission => e !== null)

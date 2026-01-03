@@ -152,6 +152,11 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
               <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2">
                 {emission.title}
               </h2>
+              {emission.theme && (
+                <p className="text-xs text-gray-600 mt-1 leading-snug line-clamp-2">
+                  {emission.theme}
+                </p>
+              )}
             </div>
           </article>
         ))}

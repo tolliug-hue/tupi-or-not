@@ -19,6 +19,7 @@ export interface Emission {
   playlist: PlaylistItem[];
   searchableText: string;
   genres: string[];
+  theme: string;
 }
 
 export interface GlobalTags {

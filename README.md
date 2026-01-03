@@ -15,7 +15,7 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
 
 | Onglet | Rôle | Lien CSV Public |
 | :--- | :--- | :--- |
-| **Emissions** | Métadonnées de l'émission (Numéro, Date, Invité, Plateforme). | [Lien CSV Émissions](https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv) |
+| **Emissions** | Métadonnées de l'émission (Numéro, Date, Invité, Plateforme, Thème). | [Lien CSV Émissions](https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv) |
 | **Playlists** | Détails des titres (Artiste, Titre, Proposé par, Genre). | [Lien CSV Playlists](https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv) |
 
 ## 🎧 Expérience de Lecture et d'Exploration
@@ -34,7 +34,7 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
 ### 3. Exploration Avancée
 *   **Navigation Fluide :** Chargement progressif des émissions (Pagination "Load More") pour une navigation rapide et réactive, même sur mobile.
 *   **Images Haute Définition :** Récupération optimisée des pochettes HD (via convention de nommage stricte pour Archive.org) garantissant une qualité visuelle maximale.
-*   **Recherche Instantanée :** Barre de recherche en haut de page pour filtrer en temps réel par **Artiste, Titre, Invité, Date, Numéro d'émission et Genre**.
+*   **Recherche Instantanée :** Barre de recherche en haut de page pour filtrer en temps réel par **Artiste, Titre, Invité, Thème, Date, Numéro d'émission et Genre**.
 *   **Explorateur de Tags :** Bloc unique (Accordéon/Toggle) permettant de basculer entre le nuage des **Artistes** et le nuage des **Genres**.
 *   **Playlist Détaillée :** Affichage de la playlist complète dans la modale avec des liens d'exploration pour chaque titre :
     *   **Google :** Recherche optimisée pour l'Artiste.
