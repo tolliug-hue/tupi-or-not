@@ -21,7 +21,7 @@ export default async function Home() {
         {/* SUPPRESSION DE LA TOP BAR ICI (Le code est plus propre) */}
 
         {/* MAIN HEADER */}
-        <div className="bg-black p-4 border-b border-gray-700 text-white">
+        <div className="bg-black p-4 border-b border-gray-600 text-white">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
 
             {/* BLOC GAUCHE : Burger + Logo + Titre */}
@@ -65,7 +65,7 @@ export default async function Home() {
               </div>
 
               {/* Ligne 2 : Compteur */}
-              <div className="text-xs text-gray-500 font-mono">
+              <div className="text-xs text-gray-300 font-mono">
                 {emissions.length} émissions archivées
               </div>
 

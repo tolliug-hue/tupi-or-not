@@ -121,7 +121,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   src={emission.imageUrl}
                   alt={emission.title}
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                   // 4. PERF : Priorité LCP pour les 4 premières images
