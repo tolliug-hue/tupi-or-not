@@ -148,6 +148,15 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 <div className="text-xs font-bold text-gray-900">
                   {emission.date}
                 </div>
+                {emission.listenCount !== undefined && (
+                  <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
+                    {/* Icône Play (Triangle simple style Mixcloud) */}
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+                    </svg>
+                    {emission.listenCount}
+                  </div>
+                )}
               </div>
               <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2">
                 {emission.title}

@@ -20,6 +20,8 @@ export interface Emission {
   searchableText: string;
   genres: string[];
   theme: string;
+  listenCount?: number;
+  mixcloudLegacy: boolean;
 }
 
 export interface GlobalTags {

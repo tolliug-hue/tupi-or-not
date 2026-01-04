@@ -5,6 +5,20 @@ import { Emission, GlobalTags, PlaylistItem } from './types';
 const EMISSIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv';
 const PLAYLISTS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv';
 
+// SUPPRESSION DE LA LISTE EN DUR (C'est le CSV qui pilote maintenant)
+
+// --- UTILITAIRES ---
+
+async function processInBatches<T>(items: T[], batchSize: number, task: (item: T) => Promise<T>): Promise<T[]> {
+    const results: T[] = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(task));
+        results.push(...batchResults);
+    }
+    return results;
+}
+
 async function fetchCsv(url: string): Promise<any[]> {
     const res = await fetch(url); 
     if (!res.ok) throw new Error(`Erreur fetch CSV: ${res.statusText}`);
@@ -18,6 +32,32 @@ async function fetchCsv(url: string): Promise<any[]> {
         });
     });
 }
+
+async function fetchArchiveGlobalStats(ids: string[]): Promise<Record<string, number>> {
+    if (ids.length === 0) return {};
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 50) {
+        chunks.push(ids.slice(i, i + 50));
+    }
+    const statsMap: Record<string, number> = {};
+    for (const chunk of chunks) {
+        try {
+            const url = `https://be-api.us.archive.org/views/v1/short/${chunk.join(',')}`;
+            const res = await fetch(url, { next: { revalidate: 3600 } });
+            if (res.ok) {
+                const data = await res.json();
+                Object.keys(data).forEach(key => {
+                    if (data[key] && data[key].all_time) {
+                        statsMap[key] = data[key].all_time;
+                    }
+                });
+            }
+        } catch (e) { /* Ignore */ }
+    }
+    return statsMap;
+}
+
+// --- FONCTION PRINCIPALE ---
 
 export async function getEmissions(): Promise<{ emissions: Emission[], globalTags: GlobalTags[], globalGenres: GlobalTags[] }> {
     const [rawEmissions, rawPlaylists] = await Promise.all([
@@ -102,20 +142,14 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 }
             }
             
-            // --- NOUVELLE LOGIQUE D'IMAGE DIRECTE ---
             let imageUrl = null;
-            
             if (platform === 'archive') {
                 const archiveId = link.split('/').pop();
-                // CONSTRUCTION DIRECTE DE L'URL HD
-                // Hypothèse : Le fichier s'appelle toujours "TupiXX_itemimage.jpg"
-                // Pas d'appel API, c'est instantané.
                 if (archiveId) {
                     const filename = `Tupi${number}_itemimage.jpg`;
                     imageUrl = `https://archive.org/download/${archiveId}/${filename}`;
                 }
             }
-            // ----------------------------------------
 
             let title = `Émission #${number}`;
             const invité = row['Invité'] || '';
@@ -123,6 +157,11 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 title += ` - Invité : ${invité}`;
             }
             const theme = row['Theme'] || '';
+            
+            // NOUVEAU : Lecture de la colonne "Mixcloud Legacy"
+            // Si la case contient quelque chose (ex: "OUI"), c'est true. Sinon false.
+            const mixcloudLegacy = !!row['Mixcloud Legacy'];
+
             const genres = Array.from(emissionGenresMap.get(number) || []);
             const playlistSearch = searchableTextMap.get(number)?.join(' ') || '';
             const searchableText = `${title} ${rawDate} ${invité} ${theme} ${genres.join(' ')} ${playlistSearch}`.toLowerCase();
@@ -139,39 +178,76 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 searchableText: searchableText,
                 genres: genres,
                 theme: theme,
+                listenCount: 0,
+                mixcloudLegacy: mixcloudLegacy, // On stocke l'info
             } as Emission;
         })
         .filter((e): e is Emission => e !== null)
         .sort((a, b) => b.number - a.number);
 
-    // 3. RÉCUPÉRATION ASYNCHRONE (Uniquement pour Mixcloud maintenant)
-    // On n'a plus besoin de batching complexe car on ne traite que les quelques émissions Mixcloud
-    const finalEmissionsWithImages = await Promise.all(
-        finalEmissions.map(async (emission) => {
+    // --- BULK ARCHIVE STATS ---
+    const archiveIds = finalEmissions
+        .filter(e => e.platform === 'archive')
+        .map(e => e.link.split('/').pop() || '')
+        .filter(id => id !== '');
+    
+    const archiveStatsMap = await fetchArchiveGlobalStats(archiveIds);
+
+    // 3. ENRICHISSEMENT
+    const finalEmissionsWithStats = await processInBatches(finalEmissions, 5, async (emission) => {
+        
+        // A. MIXCLOUD (Standard)
+        if (emission.platform === 'mixcloud') {
+            try {
+                const apiLink = emission.link.replace('www.mixcloud.com', 'api.mixcloud.com');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const res = await fetch(apiLink, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.play_count !== undefined) emission.listenCount = data.play_count;
+                    if (!emission.imageUrl && data.pictures) {
+                        emission.imageUrl = data.pictures.extra_large || data.pictures.large;
+                    }
+                }
+            } catch (err) { /* Ignore */ }
+        }
+
+        // B. ARCHIVE.ORG (Avec Bonus Mixcloud Legacy piloté par le CSV)
+        if (emission.platform === 'archive') {
+            const archiveId = emission.link.split('/').pop();
             
-            // Seul Mixcloud a besoin d'un fetch pour trouver son image
-            if (emission.platform === 'mixcloud' && !emission.imageUrl) {
+            // 1. Stats Archive
+            if (archiveId && archiveStatsMap[archiveId]) {
+                emission.listenCount = archiveStatsMap[archiveId];
+            }
+
+            // 2. Stats Mixcloud Legacy (Si coché dans le CSV)
+            // MODIF : On utilise la propriété de l'objet au lieu de la liste en dur
+            if (emission.mixcloudLegacy) {
                 try {
-                    const oembedUrl = `https://www.mixcloud.com/oembed/?url=${encodeURIComponent(emission.link)}&format=json`;
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000); 
+                    const dateSlug = emission.date.replace(/\//g, '-');
+                    const legacyUrl = `https://api.mixcloud.com/olivier-guillot2/tupi-or-not-${emission.number}-${dateSlug}/`;
                     
-                    const response = await fetch(oembedUrl, { signal: controller.signal });
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    const res = await fetch(legacyUrl, { signal: controller.signal });
                     clearTimeout(timeoutId);
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.image) emission.imageUrl = data.image;
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.play_count) {
+                            emission.listenCount = (emission.listenCount || 0) + data.play_count;
+                        }
                     }
-                } catch (err) {
-                    // Erreur silencieuse
-                }
+                } catch (e) { /* Ignore */ }
             }
-            // Pour Archive, l'URL est déjà construite plus haut, on ne fait rien.
-
-            return emission;
-        })
-    );
+        }
+        
+        return emission;
+    });
     
     const globalTags = Array.from(globalArtistCounts.entries())
         .map(([tag, count]) => ({ tag, count }))
@@ -181,5 +257,5 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         .map(([tag, count]) => ({ tag, count }))
         .sort((a, b) => b.count - a.count);
 
-    return { emissions: finalEmissionsWithImages, globalTags, globalGenres };
+    return { emissions: finalEmissionsWithStats, globalTags, globalGenres };
 }

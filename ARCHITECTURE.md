@@ -45,8 +45,11 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
         *   **`globalTags` :** Compte la fréquence de chaque Artiste (y compris les artistes multiples séparés par des virgules) pour le nuage de tags.
         *   **`globalGenres` :** Compte la fréquence de chaque Genre (issu de la colonne `Genre` de la playlist) pour le nuage de genres.
     *   **Gestion des Images (Stratégie Hybride) :**
-        *   **Mixcloud :** Récupération via l'API oEmbed (avec Timeout sécurisé).
+        *   **Mixcloud :** Récupération via l'API REST (optimisée pour récupérer Image + Stats en un seul appel)
         *   **Archive.org (Optimisé) :** Construction **déterministe** des URLs d'images HD basée sur une convention de nommage stricte (`Tupi{XX}_itemimage.jpg`). Cela supprime la dépendance à l'API de métadonnées d'Archive.org, rendant le build quasi-instantané.
+         *   **Enrichissement & Statistiques :**
+        *   **Archive.org (Bulk) :** Utilisation de l'API `views/v1/short` pour récupérer les compteurs d'écoutes de toutes les émissions en une seule requête (Batch), garantissant une performance optimale.
+        *   **Agrégation Legacy :** Calcul automatique du total des écoutes (Archive + Mixcloud) pour les émissions migrées, piloté par la colonne `Mixcloud Legacy` du CSV.
     *   **Recherche :** Génère une chaîne de caractères unique (`searchableText`) pour chaque émission, incluant le Titre, la Date, l'Invité, le Thème, les Artistes et les Genres. Cette chaîne est utilisée pour la recherche instantanée.
     *   **Sécurité :** Ce fichier n'est jamais importé côté client, garantissant que la librairie `papaparse` reste sur le serveur.
 
