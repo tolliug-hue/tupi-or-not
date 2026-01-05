@@ -1,4 +1,3 @@
-// src/app/page.tsx
 import { getEmissions } from '@/lib/data';
 import EmissionList from '../components/EmissionList';
 import SearchBar from '../components/SearchBar';
@@ -8,6 +7,7 @@ import { SocialLinks } from '@/components/SocialLinks';
 import MobileMenu from '@/components/MobileMenu';
 import Image from 'next/image';
 
+// Activation de l'ISR pour 1 heure (3600 secondes)
 export const revalidate = 3600;
 
 export default async function Home() {
@@ -17,8 +17,6 @@ export default async function Home() {
     <main className="min-h-screen bg-gray-100 text-gray-900 font-sans">
 
       <header className="sticky top-0 z-40 shadow-xl">
-
-        {/* SUPPRESSION DE LA TOP BAR ICI (Le code est plus propre) */}
 
         {/* MAIN HEADER */}
         <div className="bg-black p-4 border-b border-gray-600 text-white">

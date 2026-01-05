@@ -1,14 +1,20 @@
-// src/lib/data.ts
 import Papa from 'papaparse';
 import { Emission, GlobalTags, PlaylistItem } from './types';
 
-const EMISSIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv';
-const PLAYLISTS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv';
+// --- CONFIGURATION ---
+const CONFIG = {
+  URL_EMISSIONS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=43357015&single=true&output=csv',
+  URL_PLAYLISTS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSufSOVQkT11EZaJAGQ5RbC7E01QFcUmjPUHI8FSNjbqEg7L5tcuUBZzJRKRi0AXoLD5llJe1PP8_8b/pub?gid=1302606414&single=true&output=csv',
+  TIMEOUT_MIXCLOUD: 4000, // Utilisé pour les stats Mixcloud
+  BATCH_SIZE: 5
+};
 
-// SUPPRESSION DE LA LISTE EN DUR (C'est le CSV qui pilote maintenant)
-
-// --- UTILITAIRES ---
-
+/**
+ * Traite une liste d'éléments par lots (batch) pour éviter de saturer les API externes.
+ * @param items Liste des éléments à traiter
+ * @param batchSize Taille du lot
+ * @param task Fonction asynchrone à exécuter pour chaque élément
+ */
 async function processInBatches<T>(items: T[], batchSize: number, task: (item: T) => Promise<T>): Promise<T[]> {
     const results: T[] = [];
     for (let i = 0; i < items.length; i += batchSize) {
@@ -19,6 +25,9 @@ async function processInBatches<T>(items: T[], batchSize: number, task: (item: T
     return results;
 }
 
+/**
+ * Récupère et parse un fichier CSV distant.
+ */
 async function fetchCsv(url: string): Promise<any[]> {
     const res = await fetch(url); 
     if (!res.ok) throw new Error(`Erreur fetch CSV: ${res.statusText}`);
@@ -33,6 +42,9 @@ async function fetchCsv(url: string): Promise<any[]> {
     });
 }
 
+/**
+ * Récupère les statistiques globales d'Archive.org en une seule requête (Bulk).
+ */
 async function fetchArchiveGlobalStats(ids: string[]): Promise<Record<string, number>> {
     if (ids.length === 0) return {};
     const chunks = [];
@@ -57,12 +69,14 @@ async function fetchArchiveGlobalStats(ids: string[]): Promise<Record<string, nu
     return statsMap;
 }
 
-// --- FONCTION PRINCIPALE ---
-
+/**
+ * Fonction principale : Récupère, lie et enrichit toutes les données des émissions.
+ * @returns Un objet contenant les émissions enrichies, les tags et les genres.
+ */
 export async function getEmissions(): Promise<{ emissions: Emission[], globalTags: GlobalTags[], globalGenres: GlobalTags[] }> {
     const [rawEmissions, rawPlaylists] = await Promise.all([
-        fetchCsv(EMISSIONS_URL),
-        fetchCsv(PLAYLISTS_URL),
+        fetchCsv(CONFIG.URL_EMISSIONS),
+        fetchCsv(CONFIG.URL_PLAYLISTS),
     ]);
 
     const playlistsMap = new Map<number, PlaylistItem[]>();
@@ -71,7 +85,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
     const globalGenreCounts = new Map<string, number>();
     const emissionGenresMap = new Map<number, Set<string>>();
 
-    // 1. Traitement des Playlists (Inchangé)
+    // 1. Traitement des Playlists
     rawPlaylists.forEach((row: any) => {
         const rawNum = row['Emission'] || '';
         const number = parseInt(rawNum.toString().replace(/\D/g, '')) || 0;
@@ -142,6 +156,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 }
             }
             
+            // Image par défaut (Optimisée avec convention de nommage stricte)
             let imageUrl = null;
             if (platform === 'archive') {
                 const archiveId = link.split('/').pop();
@@ -157,9 +172,6 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 title += ` - Invité : ${invité}`;
             }
             const theme = row['Theme'] || '';
-            
-            // NOUVEAU : Lecture de la colonne "Mixcloud Legacy"
-            // Si la case contient quelque chose (ex: "OUI"), c'est true. Sinon false.
             const mixcloudLegacy = !!row['Mixcloud Legacy'];
 
             const genres = Array.from(emissionGenresMap.get(number) || []);
@@ -179,7 +191,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 genres: genres,
                 theme: theme,
                 listenCount: 0,
-                mixcloudLegacy: mixcloudLegacy, // On stocke l'info
+                mixcloudLegacy: mixcloudLegacy,
             } as Emission;
         })
         .filter((e): e is Emission => e !== null)
@@ -193,15 +205,15 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
     
     const archiveStatsMap = await fetchArchiveGlobalStats(archiveIds);
 
-    // 3. ENRICHISSEMENT
-    const finalEmissionsWithStats = await processInBatches(finalEmissions, 5, async (emission) => {
+    // 3. ENRICHISSEMENT (Mixcloud + Legacy Mixcloud Sum)
+    const finalEmissionsWithStats = await processInBatches(finalEmissions, CONFIG.BATCH_SIZE, async (emission) => {
         
         // A. MIXCLOUD (Standard)
         if (emission.platform === 'mixcloud') {
             try {
                 const apiLink = emission.link.replace('www.mixcloud.com', 'api.mixcloud.com');
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MIXCLOUD);
                 const res = await fetch(apiLink, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 
@@ -215,24 +227,23 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             } catch (err) { /* Ignore */ }
         }
 
-        // B. ARCHIVE.ORG (Avec Bonus Mixcloud Legacy piloté par le CSV)
+        // B. ARCHIVE.ORG (Avec Bonus Mixcloud Legacy)
         if (emission.platform === 'archive') {
             const archiveId = emission.link.split('/').pop();
             
-            // 1. Stats Archive
+            // 1. Stats Archive (Instantané via Map)
             if (archiveId && archiveStatsMap[archiveId]) {
                 emission.listenCount = archiveStatsMap[archiveId];
             }
 
             // 2. Stats Mixcloud Legacy (Si coché dans le CSV)
-            // MODIF : On utilise la propriété de l'objet au lieu de la liste en dur
             if (emission.mixcloudLegacy) {
                 try {
                     const dateSlug = emission.date.replace(/\//g, '-');
                     const legacyUrl = `https://api.mixcloud.com/olivier-guillot2/tupi-or-not-${emission.number}-${dateSlug}/`;
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MIXCLOUD);
                     const res = await fetch(legacyUrl, { signal: controller.signal });
                     clearTimeout(timeoutId);
 

@@ -1,4 +1,3 @@
-// src/components/TagExplorer.tsx
 'use client';
 
 import { useState } from 'react';
@@ -11,20 +10,28 @@ const TAG_COLORS = {
     GENRE: { bg: 'bg-green-100', text: 'text-green-800', hover: 'hover:bg-green-200' },
 };
 
+/**
+ * Composant d'exploration par nuage de mots-clés (Artistes ou Genres).
+ * Utilise un accordéon pour économiser l'espace vertical.
+ */
 export default function TagExplorer({ artistTags, genreTags }: { artistTags: GlobalTags[], genreTags: GlobalTags[] }) {
   const { setSearchTerm } = useSearch();
   const [activeTab, setActiveTab] = useState<'artist' | 'genre'>('artist');
   
-  // 1. OPTIMISATION : Fermé par défaut pour alléger le chargement initial (LCP/TBT)
+  // Fermé par défaut pour alléger le chargement initial (LCP/TBT)
   const [isOpen, setIsOpen] = useState(false); 
 
   // Détermine le jeu de tags et les couleurs actifs
   const activeTags = activeTab === 'artist' ? artistTags : genreTags;
   const colors = activeTab === 'artist' ? TAG_COLORS.ARTIST : TAG_COLORS.GENRE;
   
-  // Calcul de la taille de police
+  // Calcul de la taille de police (pour l'effet "nuage")
   const maxCount = activeTags.length > 0 ? activeTags[0].count : 1;
   
+  /**
+   * Calcule une taille de police proportionnelle à la fréquence du tag.
+   * @param count Nombre d'occurrences du tag
+   */
   const getFontSize = (count: number) => {
     const minSize = 0.75; 
     const maxSize = 1.5; 
@@ -110,8 +117,7 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
         <div className="p-2">
           <div className="h-32 md:h-48 overflow-y-auto pr-1">
-            {/* 2. OPTIMISATION : Rendu conditionnel. 
-                Si c'est fermé, React ne génère pas les centaines de boutons dans le DOM. */}
+            {/* Rendu conditionnel. Si c'est fermé, React ne génère pas les centaines de boutons dans le DOM. */}
             {isOpen && <TagCloudContent />}
           </div>
         </div>

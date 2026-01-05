@@ -1,15 +1,17 @@
-// src/components/EmissionList.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Emission, PlaylistItem } from '@/lib/types'; // Import depuis types (Sprint 9)
+import { Emission, PlaylistItem } from '@/lib/types';
 import { useSearch } from '@/context/SearchContext';
 import Image from 'next/image';
 
+/**
+ * Composant principal affichant la grille des émissions et gérant la modale de lecture.
+ */
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
 
-  // 1. PERF : Pagination pour alléger le DOM initial (12 éléments)
+  // Pagination : On commence par 12 éléments pour alléger le DOM initial
   const [visibleCount, setVisibleCount] = useState(12);
 
   const { searchTerm } = useSearch();
@@ -35,14 +37,14 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     });
   }, [initialEmissions, searchTerm]);
 
-  // 2. PERF : On coupe la liste pour n'afficher que les éléments visibles
+  // Pagination : On coupe la liste pour n'afficher que les éléments visibles
   const displayedEmissions = filteredEmissions.slice(0, visibleCount);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + 12);
   };
 
-  // Composant PlaylistDisplay
+  // Sous-composant pour l'affichage de la playlist dans la modale
   const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
     const getGoogleSearchLink = (query: string) => {
       return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
@@ -111,15 +113,12 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             key={emission.id}
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 flex flex-col group"
           >
-            {/* 
-                MODIFICATION SPRINT 27 : 
-                Un seul grand bouton qui contient TOUT (Image + Texte).
-            */}
+            {/* BOUTON GLOBAL (Image + Texte). */}
             <button
               className="w-full h-full flex flex-col text-left focus:outline-none"
               onClick={() => setSelectedEmission(emission)}
             >
-              {/* ZONE VISUELLE (Devenue une simple DIV) */}
+              {/* ZONE VISUELLE */}
               <div className="aspect-square bg-gray-200 overflow-hidden relative w-full">
                 {emission.imageUrl ? (
                   <Image
@@ -147,7 +146,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 </div>
               </div>
 
-              {/* TEXTE (Maintenant à l'intérieur du bouton) */}
+              {/* TEXTE */}
               <div className="px-2 py-1 flex-1 flex flex-col w-full">
                 <div className="flex justify-between items-center mb-0.5">
                   <div className="text-xs font-bold text-gray-900">
@@ -237,7 +236,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </div>
                 )}
 
-                {/* ZONE LECTEUR (Conteneur de 60px centré) */}
+                {/* ZONE IFRAME LECTEUR (Conteneur de 60px centré) */}
                 <div className="w-full h-[60px] flex items-center justify-center bg-black">
 
                   {selectedEmission.platform === 'mixcloud' ? (
