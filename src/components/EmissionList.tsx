@@ -111,62 +111,68 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             key={emission.id}
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 flex flex-col group"
           >
-            {/* ZONE VISUELLE (Clic = Lecture) */}
+            {/* 
+                MODIFICATION SPRINT 27 : 
+                Un seul grand bouton qui contient TOUT (Image + Texte).
+            */}
             <button
-              className="aspect-square bg-gray-200 cursor-pointer overflow-hidden relative w-full"
+              className="w-full h-full flex flex-col text-left focus:outline-none"
               onClick={() => setSelectedEmission(emission)}
             >
-              {emission.imageUrl ? (
-                <Image
-                  src={emission.imageUrl}
-                  alt={emission.title}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                  // 4. PERF : Priorité LCP pour les 4 premières images
-                  priority={index < 4}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-600">
-                  <span className="text-4xl font-bold opacity-30">#{emission.id}</span>
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                  <svg className="w-5 h-5 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-            </button>
-
-            {/* TEXTE */}
-            <div className="px-2 py-1 flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-0.5">
-                <div className="text-xs font-bold text-gray-900">
-                  {emission.date}
-                </div>
-                {emission.listenCount !== undefined && (
-                  <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
-                    {/* Icône Play (Triangle simple style Mixcloud) */}
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
-                    </svg>
-                    {emission.listenCount}
+              {/* ZONE VISUELLE (Devenue une simple DIV) */}
+              <div className="aspect-square bg-gray-200 overflow-hidden relative w-full">
+                {emission.imageUrl ? (
+                  <Image
+                    src={emission.imageUrl}
+                    alt={emission.title}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                    priority={index < 4}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-600">
+                    <span className="text-4xl font-bold opacity-30">#{emission.id}</span>
                   </div>
                 )}
+
+                {/* Overlay Play au survol */}
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                    <svg className="w-5 h-5 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2">
-                {emission.title}
-              </h2>
-              {emission.theme && (
-                <p className="text-xs text-gray-600 mt-1 leading-snug line-clamp-2">
-                  {emission.theme}
-                </p>
-              )}
-            </div>
+
+              {/* TEXTE (Maintenant à l'intérieur du bouton) */}
+              <div className="px-2 py-1 flex-1 flex flex-col w-full">
+                <div className="flex justify-between items-center mb-0.5">
+                  <div className="text-xs font-bold text-gray-900">
+                    {emission.date}
+                  </div>
+                  {/* Compteur d'écoutes */}
+                  {emission.listenCount !== undefined && (
+                    <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+                      </svg>
+                      {emission.listenCount}
+                    </div>
+                  )}
+                </div>
+                <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2">
+                  {emission.title}
+                </h2>
+                {emission.theme && (
+                  <p className="text-xs text-gray-600 mt-1 leading-snug line-clamp-2">
+                    {emission.theme}
+                  </p>
+                )}
+              </div>
+            </button>
           </article>
         ))}
 
