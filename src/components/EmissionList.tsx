@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Emission, PlaylistItem } from '@/lib/types';
 import { useSearch } from '@/context/SearchContext';
 import Image from 'next/image';
@@ -10,11 +10,12 @@ import Image from 'next/image';
  */
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
-
+  
   // Pagination : On commence par 12 éléments pour alléger le DOM initial
   const [visibleCount, setVisibleCount] = useState(12);
 
-  const { searchTerm } = useSearch();
+  // On récupère les valeurs optimisées du Context
+  const { debouncedSearchTerm, selectedTag } = useSearch();
 
   const getArchiveId = (link: string) => {
     const parts = link.split('/');
@@ -25,17 +26,31 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setSelectedEmission(null);
   };
 
-  // --- LOGIQUE DE FILTRAGE ---
+  // --- LOGIQUE DE FILTRAGE OPTIMISÉE ---
   const filteredEmissions = useMemo(() => {
-    if (!searchTerm) {
-      return initialEmissions;
-    }
-    const lowerCaseSearch = searchTerm.toLowerCase();
-
     return initialEmissions.filter(emission => {
-      return emission.searchableText.includes(lowerCaseSearch);
+      // 1. Filtre par Tag (si un tag est sélectionné)
+      // Note: On compare avec les genres de l'émission
+      if (selectedTag && !emission.genres.some(g => g.toLowerCase() === selectedTag.toLowerCase())) {
+        return false;
+      }
+
+      // 2. Filtre par Texte (Debounced)
+      if (debouncedSearchTerm) {
+        const lowerTerm = debouncedSearchTerm.toLowerCase();
+        return emission.searchableText.includes(lowerTerm);
+      }
+
+      return true;
     });
-  }, [initialEmissions, searchTerm]);
+  }, [initialEmissions, debouncedSearchTerm, selectedTag]);
+
+  // Reset de la pagination quand les filtres changent (UX)
+  useEffect(() => {
+    setVisibleCount(12);
+    // Optionnel : Scroll en haut de page si on veut
+    // window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [debouncedSearchTerm, selectedTag]);
 
   // Pagination : On coupe la liste pour n'afficher que les éléments visibles
   const displayedEmissions = filteredEmissions.slice(0, visibleCount);
@@ -178,8 +193,9 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         {/* Message si aucune émission trouvée */}
         {filteredEmissions.length === 0 && (
           <div className="col-span-full text-center py-12 text-gray-600">
-            <p className="text-xl font-semibold">Aucune émission trouvée pour "{searchTerm}".</p>
-            <p className="text-sm mt-2">Essayez un autre mot-clé (invité, artiste, titre).</p>
+            <p className="text-xl font-semibold">Aucune émission trouvée.</p>
+            {selectedTag && <p className="text-sm mt-2">Filtre actif : <span className="font-bold">{selectedTag}</span></p>}
+            {debouncedSearchTerm && <p className="text-sm mt-1">Recherche : "{debouncedSearchTerm}"</p>}
           </div>
         )}
       </div>
@@ -200,7 +216,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       {selectedEmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={closeModal}>
 
-          {/* CONTENEUR PRINCIPAL : Flex Column + Overflow Hidden pour préserver les coins arrondis */}
+          {/* CONTENEUR PRINCIPAL */}
           <div
             className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
@@ -236,7 +252,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </div>
                 )}
 
-                {/* ZONE IFRAME LECTEUR (Conteneur de 60px centré) */}
+                {/* ZONE IFRAME LECTEUR */}
                 <div className="w-full h-[60px] flex items-center justify-center bg-black">
 
                   {selectedEmission.platform === 'mixcloud' ? (
@@ -276,4 +292,4 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       )}
     </>
   );
-}      
+}

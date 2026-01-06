@@ -55,7 +55,12 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 
 ## 3. Stratégie de Performance et UX
 
-*   **Performance Critique (ISR) :** La page utilise l'**Incremental Static Regeneration** (`export const revalidate = 3600;`) pour mettre en cache les données pendant 1 heure. Cela résout le problème critique du **N+1** (multiples requêtes Mixcloud/Google Sheets) et garantit une performance constante en production.
+*   **Performance Critique (Caching Granulaire) :**
+    *   **ISR (Incremental Static Regeneration) :** Utilisation de la directive `next: { revalidate }` au niveau des appels `fetch` pour mettre en cache les données. Cela résout le problème critique du **N+1** (multiples requêtes Mixcloud/Google Sheets) et garantit une performance constante en production.
+    *   **Stratégie Hybride :**
+        *   **CSV Google Sheets :** Cache de **1 heure** (`3600s`) pour une mise à jour rapide des contenus.
+        *   **APIs Externes (Mixcloud/Archive) :** Cache de **24 heures** (`86400s`) pour les statistiques d'écoute, car elles varient peu et sont coûteuses à récupérer.
+    *   **Batch Processing :** Les appels d'enrichissement sont traités par lots (Batch) avec `Promise.allSettled` pour éviter les timeouts au build et garantir qu'une erreur sur une émission ne bloque pas le déploiement.
 *   **Rendu Côté Serveur (SSR/SSG) :** La fonction `getEmissions` est appelée côté serveur pour un chargement initial très rapide des données brutes.
 *   **Optimisation du LCP (Largest Contentful Paint) :**
     *   **Priorisation :** Les 4 premières images de la grille utilisent la propriété `priority` de `next/image`. Elles sont préchargées par le navigateur, améliorant drastiquement la vitesse d'affichage perçue.
@@ -63,12 +68,14 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 *   **Gestion du DOM & TBT (Total Blocking Time) :**
     *   **Pagination Client-Side :** Seules les 12 premières émissions sont affichées au chargement ("Load More"). Cela divise par 6 le temps de calcul de mise en page (`Style & Layout`) du navigateur.
     *   **Rendu Conditionnel (Tags) :** Le contenu du `TagExplorer` (300+ boutons) n'est injecté dans le DOM que lorsque l'utilisateur ouvre l'accordéon, réduisant le poids initial de la page.
+*   **Filtrage & Recherche (Anti-Lag) :**
+    *   **Debounce :** Implémentation d'une temporisation de **300ms** dans le `SearchContext` pour ne déclencher le filtrage lourd que lorsque l'utilisateur cesse de taper.
+    *   **Memoization :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` *stabilisé* change.
 *   **Optimisation Avancée du Bundle JS :**
     *   **Tree Shaking :** Séparation stricte des types et de la logique de données.
     *   **Modern Build :** Configuration de `browserslist` (`not IE 11`) et `tsconfig` (`ES2017`) pour éliminer les "Polyfills" et le "Legacy JavaScript", réduisant la charge CPU sur mobile.
     *   **Config Next.js :** Utilisation de `transpilePackages` et `optimizePackageImports`.
 *   **Lazy Loading (Lecteur) :** Les iFrames des lecteurs audio (Mixcloud/Archive) ne sont chargés que lorsque l'utilisateur clique sur la vignette, économisant énormément de bande passante.
-*   **Filtrage Efficace :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` change.
 *   **Accessibilité (A11y & WCAG) :**
     *   **Structure Sémantique :** Le composant `TagExplorer` utilise une structure **DIV/BUTTON** pour le header, respectant le standard HTML et permettant la navigation au clavier.
     *   **Contrastes :** Respect strict des ratios de contraste (Textes en `gray-900`, Badges en `orange-700`/`blue-700`) pour une lisibilité optimale.
@@ -83,7 +90,7 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 
 *   **Typage (TypeScript) :** L'utilisation d'interfaces centralisées dans `types.ts` (`Emission`, `PlaylistItem`, `GlobalTags`) garantit la cohérence des données du début à la fin de l'application sans couplage fort.
 *   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
-*   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 2 secondes pour éviter de bloquer le build en cas de latence de l'API.
+*   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 3 secondes pour éviter de bloquer le build en cas de latence de l'API.
 
 ## 5. Infrastructure & Déploiement
 
