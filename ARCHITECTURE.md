@@ -71,6 +71,10 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 *   **Filtrage & Recherche (Anti-Lag) :**
     *   **Debounce :** Implémentation d'une temporisation de **300ms** dans le `SearchContext` pour ne déclencher le filtrage lourd que lorsque l'utilisateur cesse de taper.
     *   **Memoization :** Le filtrage dans `EmissionList.tsx` utilise le hook `useMemo` pour ne recalculer la liste filtrée que lorsque le `searchTerm` *stabilisé* change.
+        *   **Recherche Multi-Mots :** Algorithme de filtrage inclusif (`.every()`) permettant de combiner plusieurs termes (ex: "Rock Beatles") sans contrainte d'ordre.
+*   **Robustesse UX (Error Boundaries) :**
+    *   **Page 404 :** Gestion personnalisée des URLs invalides (`not-found.tsx`).
+    *   **Crash Handler :** Écran d'erreur avec bouton de reconnexion (`error.tsx`) pour éviter les écrans blancs en cas de défaillance API.
 *   **Optimisation Avancée du Bundle JS :**
     *   **Tree Shaking :** Séparation stricte des types et de la logique de données.
     *   **Modern Build :** Configuration de `browserslist` (`not IE 11`) et `tsconfig` (`ES2017`) pour éliminer les "Polyfills" et le "Legacy JavaScript", réduisant la charge CPU sur mobile.
@@ -90,7 +94,7 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 
 *   **Typage (TypeScript) :** L'utilisation d'interfaces centralisées dans `types.ts` (`Emission`, `PlaylistItem`, `GlobalTags`) garantit la cohérence des données du début à la fin de l'application sans couplage fort.
 *   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
-*   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de 3 secondes pour éviter de bloquer le build en cas de latence de l'API.
+*   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de **3 secondes** pour éviter de bloquer le build en cas de latence de l'API.
 
 ## 5. Infrastructure & Déploiement
 
@@ -99,3 +103,8 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
 *   **Gestion DNS :** Délégation des Nameservers vers Vercel pour une propagation rapide et une gestion simplifiée.
 *   **Sécurité (SSL) :** Certificats HTTPS générés et renouvelés automatiquement par Vercel (Let's Encrypt).
 *   **Redirection :** Le sous-domaine `www` redirige automatiquement vers le domaine racine (308 Permanent Redirect) pour consolider le SEO.
+*   **SEO Technique & Social :**
+    *   **Indexation :** Génération automatique du `sitemap.xml` et du `robots.txt`.
+    *   **Social Graph :** Implémentation du protocole Open Graph (Facebook/LinkedIn) et des Twitter Cards via les métadonnées dynamiques et l'image `opengraph-image.jpg` (File-based Metadata).
+    *   **Canonical :** Protection contre le contenu dupliqué via la balise canonique.
+```

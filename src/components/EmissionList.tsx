@@ -26,19 +26,35 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setSelectedEmission(null);
   };
 
-  // --- LOGIQUE DE FILTRAGE OPTIMISÉE ---
+ // --- LOGIQUE DE FILTRAGE OPTIMISÉE (MULTI-MOTS) ---
   const filteredEmissions = useMemo(() => {
     return initialEmissions.filter(emission => {
-      // 1. Filtre par Tag (si un tag est sélectionné)
-      // Note: On compare avec les genres de l'émission
+      
+      // 1. Filtre par Tag (si un tag est sélectionné via les boutons)
       if (selectedTag && !emission.genres.some(g => g.toLowerCase() === selectedTag.toLowerCase())) {
         return false;
       }
 
-      // 2. Filtre par Texte (Debounced)
+      // 2. Filtre par Texte (Recherche intelligente "AND")
       if (debouncedSearchTerm) {
-        const lowerTerm = debouncedSearchTerm.toLowerCase();
-        return emission.searchableText.includes(lowerTerm);
+        // On récupère le texte de recherche pré-calculé (minuscule)
+        const lowerSearchText = emission.searchableText; 
+        
+        // On découpe la recherche utilisateur en mots (ex: "Rock Beatles" -> ["rock", "beatles"])
+        const searchTerms = debouncedSearchTerm
+          .toLowerCase()
+          .split(' ')
+          .filter(term => term.trim() !== ''); // On enlève les espaces vides
+
+        // On vérifie que CHAQUE mot tapé est présent dans le texte de l'émission
+        // .every() renvoie true seulement si toutes les conditions sont remplies
+        const matchesAllTerms = searchTerms.every(term => 
+          lowerSearchText.includes(term)
+        );
+
+        if (!matchesAllTerms) {
+          return false;
+        }
       }
 
       return true;
