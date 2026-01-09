@@ -15,7 +15,7 @@ export default function SearchBar() {
     <div className="relative w-full">
       <input
         type="text"
-        placeholder="Rechercher par artiste, invité, date ou numéro..."
+        placeholder="Rechercher par artiste, invité, date..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         // On ajoute un padding à droite pour le bouton "X"

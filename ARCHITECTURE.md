@@ -89,12 +89,16 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
     *   **Navigation Adaptative :** Header statique sur Desktop vs Architecture "Off-Canvas" (Menu Tiroir) sur Mobile via le composant `MobileMenu`.
     *   **Sticky Header Stabilisé :** Gestion fine des positions `sticky` et des marges négatives pour éviter les sauts visuels et la transparence au scroll.
 *   **Architecture de la Modale (Sandwich) :** Structure Flexbox avec Header et Footer fixes. Seule la zone centrale (Player + Playlist) est scrollable, garantissant l'intégrité des coins arrondis et l'accès permanent aux contrôles.
+*   **SEO Social & Deep Linking :**
+    *   **Dynamic Metadata :** Utilisation de `generateMetadata` (Server-Side) pour injecter les balises Open Graph (Image, Titre) spécifiques à l'émission partagée.
+    *   **URL State :** Gestion des paramètres d'URL (`?id=XX`) via `useSearchParams` pour permettre le partage direct d'une émission spécifique (ouverture automatique de la modale).
 
 ## 4. Bonnes Pratiques et Points de Vigilance
 
 *   **Typage (TypeScript) :** L'utilisation d'interfaces centralisées dans `types.ts` (`Emission`, `PlaylistItem`, `GlobalTags`) garantit la cohérence des données du début à la fin de l'application sans couplage fort.
 *   **Sécurité (Images) :** Le fichier `next.config.ts` autorise les sous-domaines dynamiques d'Archive.org (`*.archive.org`) pour garantir le chargement des images.
 *   **Robustesse (Mixcloud) :** Les appels Mixcloud sont sécurisés par un `AbortController` avec un timeout de **3 secondes** pour éviter de bloquer le build en cas de latence de l'API.
+*   **Qualité du Code (CI/CD) :** Le projet intègre des scripts de validation stricts (`typecheck`, `lint:strict`) pour garantir qu'aucun code cassé ou non-conforme ne soit déployé en production.
 
 ## 5. Infrastructure & Déploiement
 

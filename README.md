@@ -43,6 +43,8 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
     *   **Google :** Recherche optimisée pour l'Artiste.
     *   **MusicBrainz :** Recherche structurée pour l'Enregistrement (Titre + Artiste).
     *   **Discogs :** Recherche pour le Marketplace (Marketplace).
+*   **Partage & Deep Linking :** Chaque émission possède une URL unique (`?id=XX`) et des métadonnées dynamiques (Open Graph). Cela permet de partager une émission spécifique sur les réseaux sociaux (WhatsApp, Facebook...) avec un aperçu visuel de la pochette et une ouverture automatique de la modale de lecture.    
+    
 
 ### 4. Identité Visuelle
 *   **Logo :** Le logo de **Radio Octopus** est intégré au bandeau pour marquer l'identité de l'émission.
@@ -69,3 +71,8 @@ npm install
 npm run dev
 
 # 4. Le site sera accessible à l'adresse : http://localhost:3000
+
+### Commandes de Maintenance
+
+*   **Vérifier les types (TypeScript) :** `npm run typecheck`
+*   **Vérifier le code (Linting strict) :** `npm run lint:strict`

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Emission, PlaylistItem } from '@/lib/types';
 import { useSearch } from '@/context/SearchContext';
 import Image from 'next/image';
@@ -10,9 +11,16 @@ import Image from 'next/image';
  */
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
-  
+
   // Pagination : On commence par 12 éléments pour alléger le DOM initial
   const [visibleCount, setVisibleCount] = useState(12);
+
+  // État pour le feedback du bouton partage
+  const [isCopied, setIsCopied] = useState(false);
+
+  // Récupération des paramètres d'URL (pour le Deep Linking)
+  const searchParams = useSearchParams();
+  const emissionIdFromUrl = searchParams.get('id');
 
   // On récupère les valeurs optimisées du Context
   const { debouncedSearchTerm, selectedTag } = useSearch();
@@ -26,20 +34,27 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setSelectedEmission(null);
   };
 
- // --- LOGIQUE DE FILTRAGE OPTIMISÉE (MULTI-MOTS) ---
+  // Ouverture automatique de la modale si ?id=XX est dans l'URL
+  useEffect(() => {
+    if (emissionIdFromUrl) {
+      const targetEmission = initialEmissions.find(e => e.number.toString() === emissionIdFromUrl);
+      if (targetEmission) {
+        setSelectedEmission(targetEmission);
+      }
+    }
+  }, [emissionIdFromUrl, initialEmissions]);
+
+  // --- LOGIQUE DE FILTRAGE OPTIMISÉE (MULTI-MOTS) ---
   const filteredEmissions = useMemo(() => {
     return initialEmissions.filter(emission => {
-      
       // 1. Filtre par Tag (si un tag est sélectionné via les boutons)
       if (selectedTag && !emission.genres.some(g => g.toLowerCase() === selectedTag.toLowerCase())) {
         return false;
       }
-
       // 2. Filtre par Texte (Recherche intelligente "AND")
       if (debouncedSearchTerm) {
         // On récupère le texte de recherche pré-calculé (minuscule)
-        const lowerSearchText = emission.searchableText; 
-        
+        const lowerSearchText = emission.searchableText;
         // On découpe la recherche utilisateur en mots (ex: "Rock Beatles" -> ["rock", "beatles"])
         const searchTerms = debouncedSearchTerm
           .toLowerCase()
@@ -48,15 +63,13 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
 
         // On vérifie que CHAQUE mot tapé est présent dans le texte de l'émission
         // .every() renvoie true seulement si toutes les conditions sont remplies
-        const matchesAllTerms = searchTerms.every(term => 
+        const matchesAllTerms = searchTerms.every(term =>
           lowerSearchText.includes(term)
         );
-
         if (!matchesAllTerms) {
           return false;
         }
       }
-
       return true;
     });
   }, [initialEmissions, debouncedSearchTerm, selectedTag]);
@@ -75,6 +88,31 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setVisibleCount((prev) => prev + 12);
   };
 
+  // La fonction de partage
+  const handleShareEmission = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêche de fermer la modale ou de cliquer ailleurs
+    if (!selectedEmission) return;
+
+    const shareData = {
+      title: `Tupi or Not - ${selectedEmission.title}`,
+      text: `Écoute l'émission ${selectedEmission.title} de Tupi or Not !`,
+      // On génère le lien avec l'ID
+      url: `https://tupiornot.fr?id=${selectedEmission.number}`,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) { }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) { }
+    }
+  };
+
   // Sous-composant pour l'affichage de la playlist dans la modale
   const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
     const getGoogleSearchLink = (query: string) => {
@@ -89,7 +127,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     const getDiscogsSearchLink = (artiste: string, titre: string) => {
       return `https://www.discogs.com/search/?q=${encodeURIComponent(`${artiste} - ${titre}`)}&type=all`;
     };
-
     return (
       <div className="p-4 bg-white text-sm">
         <h4 className="font-bold text-gray-800 mb-2 border-b pb-1">Playlist ({playlist.length} titres)</h4>
@@ -138,7 +175,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     <>
       {/* GRILLE DES ÉMISSIONS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
-
         {displayedEmissions.map((emission, index) => (
           <article
             key={emission.id}
@@ -166,7 +202,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                     <span className="text-4xl font-bold opacity-30">#{emission.id}</span>
                   </div>
                 )}
-
                 {/* Overlay Play au survol */}
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
@@ -176,13 +211,10 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </div>
                 </div>
               </div>
-
               {/* TEXTE */}
               <div className="px-2 py-1 flex-1 flex flex-col w-full">
                 <div className="flex justify-between items-center mb-0.5">
-                  <div className="text-xs font-bold text-gray-900">
-                    {emission.date}
-                  </div>
+                  <div className="text-xs font-bold text-gray-900">{emission.date}</div>
                   {/* Compteur d'écoutes */}
                   {emission.listenCount !== undefined && (
                     <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
@@ -205,7 +237,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             </button>
           </article>
         ))}
-
         {/* Message si aucune émission trouvée */}
         {filteredEmissions.length === 0 && (
           <div className="col-span-full text-center py-12 text-gray-600">
@@ -231,7 +262,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       {/* MODALE LECTEUR */}
       {selectedEmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={closeModal}>
-
           {/* CONTENEUR PRINCIPAL */}
           <div
             className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col overflow-hidden"
@@ -244,9 +274,28 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                 {selectedEmission.title} - {selectedEmission.date}
               </h3>
 
-              <button onClick={closeModal} className="text-gray-500 hover:text-red-600 p-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors flex-shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* BOUTON PARTAGER */}
+                <button
+                  onClick={handleShareEmission}
+                  className="text-gray-800 hover:text-blue-600 p-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+                  title="Partager cette émission"
+                >
+                  {isCopied ? (
+                    // Icône Check (Succès)
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    // ICÔNE bouton partager : Carré avec flèche (Identique au Header)
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  )}
+                </button>
+                {/* BOUTON FERMER */}
+                <button onClick={closeModal} className="text-gray-800 hover:text-red-600 p-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
 
             {/* 2. ZONE SCROLLABLE (Player + Playlist) */}
