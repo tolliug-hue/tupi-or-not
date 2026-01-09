@@ -71,7 +71,7 @@ npm install
 npm run dev
 
 # 4. Le site sera accessible à l'adresse : http://localhost:3000
-
+```
 ### Commandes de Maintenance
 
 *   **Vérifier les types (TypeScript) :** `npm run typecheck`

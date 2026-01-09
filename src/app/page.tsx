@@ -37,12 +37,16 @@ export async function generateMetadata(
   if (emission && emission.imageUrl) {
     return {
       title: `Tupi or Not #${emission.number} - ${emission.title}`,
-      description: `Écoute l'émission du ${emission.date} : ${emission.title}`,
+      description: `Émission du ${emission.date} : ${emission.title}`,
       openGraph: {
         images: [emission.imageUrl],
         title: `Tupi or Not #${emission.number}`,
         description: `Écoute l'émission du ${emission.date}`,
       },
+      // On force l'URL canonique spécifique pour cette émission
+      alternates: {
+        canonical: `https://tupiornot.fr?id=${emission.number}`,
+    },
     };
   }
 
