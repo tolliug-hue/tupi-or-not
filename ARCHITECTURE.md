@@ -111,4 +111,16 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
     *   **Indexation :** Génération automatique du `sitemap.xml` et du `robots.txt`.
     *   **Social Graph :** Implémentation du protocole Open Graph (Facebook/LinkedIn) et des Twitter Cards via les métadonnées dynamiques et l'image `opengraph-image.jpg` (File-based Metadata).
     *   **Canonical :** Protection contre le contenu dupliqué via la balise canonique.
-```
+
+## 6. Viabilité & Limites (Plan Vercel Hobby)
+
+L'architecture a été spécifiquement conçue pour rester durablement dans les limites du plan gratuit (**Hobby**) de Vercel :
+
+*   **Bande Passante (100 GB/mois) :**
+    *   **Audio Déporté :** Le flux audio (le plus lourd) est streamé directement depuis les serveurs de Mixcloud et Archive.org via des iframes. Il ne consomme **aucune** bande passante sur Vercel.
+    *   **Assets :** Seuls le code (JS/CSS) et les images optimisées transitent par Vercel.
+*   **Temps de Calcul (Serverless Functions) :**
+    *   **Stratégie ISR :** Grâce à la régénération statique (`revalidate = 3600`), le serveur ne calcule la page qu'une fois par heure, quel que soit le trafic. Cela protège contre l'explosion du quota d'heures-serveur.
+*   **Optimisation d'Images (1000 sources/mois) :**
+    *   Avec un catalogue de ~100 émissions stables (qui ne changent pas tous les jours), le quota de 1000 images sources mensuelles est largement suffisant.
+*   **Contrainte Légale :** Le projet doit rester à but non lucratif (usage personnel ou associatif) pour respecter les CGU du plan Hobby.

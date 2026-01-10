@@ -5,40 +5,61 @@ import { SearchProvider } from '@/context/SearchContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
+/**
+ * Configuration globale des métadonnées (SEO & Social).
+ * Ces valeurs sont appliquées par défaut à toutes les pages,
+ * sauf si elles sont surchargées localement (ex: dans page.tsx).
+ */
 export const metadata: Metadata = {
-  // 1. DÉFINITION DE L'URL OFFICIELLE
-  // C'est la base pour tous les liens relatifs et le SEO
+  // URL de base pour la résolution des liens relatifs (OG Images, Canoniques)
   metadataBase: new URL('https://tupiornot.fr'),
 
-  // 2. TITRE & DESCRIPTION OPTIMISÉS
+  // Configuration du Titre (Template pour les pages enfants)
   title: {
     default: 'Tupi or Not',
-    template: '%s | Tupi or Not' // Utile si tu crées d'autres pages un jour (ex: /episode/123)
+    template: '%s | Tupi or Not'
   },
-  description: 'L\'émission qui mange toutes les musiques. Retrouvez toutes les archives, playlists et invités de l\'émission.',
+  description: "L'émission qui mange toutes les musiques. Retrouvez toutes les archives, playlists et invités de l'émission diffusée sur Radio Octopus.",
 
-  // 3. PROTECTION CONTRE LE DUPLICATE CONTENT
-  // Google ignorera l'adresse .vercel.app au profit de ton domaine .fr
+  // Métadonnées sémantiques
+  keywords: ['Radio', 'Musique', 'Archives', 'Podcast', 'Tupi or Not', 'Radio Octopus', 'Eclectique', 'Replay'],
+  authors: [{ name: 'Soline Garry' }, { name: 'Olivier Guillot' }],
+  creator: 'Tupi or Not',
+
+  // Protection SEO : URL Canonique pour éviter le Duplicate Content (Vercel vs Domaine)
   alternates: {
     canonical: '/',
   },
 
-  // 4. OPEN GRAPH (Pour Facebook, LinkedIn, Discord, WhatsApp...)
+  // Configuration Open Graph (Facebook, LinkedIn, WhatsApp)
   openGraph: {
     title: 'Tupi or Not',
-    description: 'L\'émission qui mange toutes les musiques. Écoutez les archives et explorez les playlists.',
+    description: "L'émission qui mange toutes les musiques. Écoutez les archives et explorez les playlists.",
     url: 'https://tupiornot.fr',
     siteName: 'Tupi or Not',
     locale: 'fr_FR',
     type: 'website',
-    // L'image sera automatiquement détectée si tu as ajouté opengraph-image.png dans src/app/
+    // L'image est gérée automatiquement via opengraph-image.png dans src/app/
   },
 
-  // 5. TWITTER CARD (Pour X / Twitter)
+  // Configuration Twitter / X
   twitter: {
-    card: 'summary_large_image', // Affiche une grande image lors du partage
+    card: 'summary_large_image',
     title: 'Tupi or Not',
-    description: 'L\'émission qui mange toutes les musiques.',
+    description: "L'émission qui mange toutes les musiques.",
+  },
+
+  // Directives pour les robots d'indexation
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -50,7 +71,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        {/* On enveloppe toute l'application avec le SearchProvider */}
+        {/* Provider pour la gestion de l'état de recherche global */}
         <SearchProvider>
           {children}
         </SearchProvider>
