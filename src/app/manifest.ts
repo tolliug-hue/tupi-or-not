@@ -14,7 +14,11 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icon.png',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any maskable' as any, 
+        // Double cast via 'unknown'
+        // 1. La valeur réelle est 'any maskable'
+        // 2. On passe par 'unknown' pour resetter le type
+        // 3. On dit à TS que c'est du type 'maskable' (qu'il accepte)
+        purpose: 'any maskable' as unknown as 'maskable',
       },
     ],
   };

@@ -7,14 +7,14 @@ export default function NotFound() {
         <h1 className="text-6xl font-black text-gray-900">404</h1>
         <h2 className="text-2xl font-bold text-gray-800">Tupi introuvable</h2>
         <p className="text-gray-600 max-w-md mx-auto">
-          Il semblerait que cette émission n'existe pas ou ait été déplacée dans les archives profondes.
+          Il semblerait que cette émission n&apos;existe pas ou ait été déplacée dans les archives profondes.
         </p>
         <div className="pt-6">
           <Link 
             href="/"
             className="inline-flex items-center px-6 py-3 bg-black text-white font-bold rounded-full hover:bg-gray-800 transition-colors shadow-lg"
           >
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </div>

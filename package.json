@@ -1,13 +1,13 @@
 {
   "name": "tupi-or-not",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "eslint . && next build", 
     "start": "next start",
-    "lint": "next lint",
-    "lint:strict": "next lint",
+    "lint": "eslint .",
+    "lint:strict": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

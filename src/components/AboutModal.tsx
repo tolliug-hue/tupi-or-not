@@ -33,7 +33,7 @@ export default function AboutModal() {
           >
             {/* Header de la modale */}
             <div className="bg-gray-100 p-4 flex justify-between items-center border-b">
-              <h2 className="font-bold text-xl">À propos de l'émission</h2>
+              <h2 className="font-bold text-xl">À propos de l&apos;émission</h2>
               <button 
                 onClick={() => setIsOpen(false)}
                 className="p-2 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
@@ -45,10 +45,10 @@ export default function AboutModal() {
             {/* Contenu */}
             <div className="p-6 space-y-4 text-sm sm:text-base leading-relaxed overflow-y-auto max-h-[70vh]">
               <p>
-                <span className="font-bold">Tupi or not</span>, revendiquant l’héritage du mouvement anthropophage de l’agitateur-poète Oswald de Andrade, est une sorte de cadavre exquis musical réalisé en ping-pong à deux.
+                <span className="font-bold">Tupi or not</span>, revendiquant l&apos;héritage du mouvement anthropophage de l&apos;agitateur-poète Oswald de Andrade, est une sorte de cadavre exquis musical réalisé en ping-pong à deux.
               </p>
               <p>
-                Les animateurs viennent chacun avec des musiques à faire découvrir à l’autre et l’émission alterne écoute et discussions – réactions à chaud sur ce qui vient d’être joué. Jazz, Pop, Electro, World musique, Musique savante, Hip Hop, Folk, Soul, Musique expérimentale… nul genre n’est à priori exclu.
+                Les animateurs viennent chacun avec des musiques à faire découvrir à l&apos;autre et l&apos;émission alterne écoute et discussions – réactions à chaud sur ce qui vient d&apos;être joué. Jazz, Pop, Electro, World musique, Musique savante, Hip Hop, Folk, Soul, Musique expérimentale… nul genre n&apos;est à priori exclu.
               </p>
               <p>
                 Régulièrement, les animateurs recevront un invité qui se prêtera au jeu et apportera quelques musiques à faire découvrir aux animateurs et donc aux auditeurs.
@@ -57,7 +57,7 @@ export default function AboutModal() {
               <hr className="border-gray-200 my-4" />
               
               <p className="text-gray-600 italic text-sm">
-                Émission mensuelle d’une heure co-animée par <span className="font-semibold text-gray-800">Soline Garry</span> et <span className="font-semibold text-gray-800">Olivier Guillot</span>, programmée dimanche à 20h et jeudi à 21h (une semaine sur deux) sur <a href="http://radio-octopus.org/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">radio-octopus.org</a>.
+                Émission mensuelle d&apos;une heure co-animée par <span className="font-semibold text-gray-800">Soline Garry</span> et <span className="font-semibold text-gray-800">Olivier Guillot</span>, programmée dimanche à 20h et jeudi à 21h (une semaine sur deux) sur <a href="http://radio-octopus.org/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">radio-octopus.org</a>.
               </p>
             </div>
           </div>

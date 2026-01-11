@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   images: {
     // MODIFICATION : Ajout de tailles très fines (180, 200, 360)
     // Pour coller au plus près des 176px de la grille mobile
-    imageSizes: [16, 32, 48, 64, 96, 128, 180, 200, 256, 360, 384],
+    imageSizes: [48, 64, 96, 128, 180, 200, 256, 360, 384],
     
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
 

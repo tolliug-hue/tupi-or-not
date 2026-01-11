@@ -37,7 +37,7 @@ async function processInBatches<T>(items: T[], batchSize: number, task: (item: T
 /**
  * Récupère et parse un fichier CSV distant avec Cache Next.js
  */
-async function fetchCsv(url: string): Promise<any[]> {
+async function fetchCsv(url: string): Promise<Record<string, string>[]> {
     try {
         // ISR : On ne re-fetch le CSV que toutes les heures
         const res = await fetch(url, { next: { revalidate: CONFIG.REVALIDATE_CSV } }); 
@@ -48,7 +48,7 @@ async function fetchCsv(url: string): Promise<any[]> {
             Papa.parse(csvText, {
                 header: true,
                 skipEmptyLines: true,
-                complete: (results: any) => resolve(results.data),
+                complete: (results: Papa.ParseResult<Record<string, string>>) => resolve(results.data),
                 error: () => resolve([]), // On ne crash pas, on renvoie vide
             });
         });
@@ -111,7 +111,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
     const emissionGenresMap = new Map<number, Set<string>>();
 
     // 1. Traitement des Playlists
-    rawPlaylists.forEach((row: any) => {
+    rawPlaylists.forEach((row: Record<string, string>) => {
         const rawNum = row['Emission'];
         // Parsing robuste du numéro
         const number = typeof rawNum === 'string' ? parseInt(rawNum.replace(/\D/g, '')) : parseInt(rawNum);
@@ -162,7 +162,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
 
     // 2. Traitement des Émissions (Base)
     const baseEmissions: Emission[] = rawEmissions
-        .map((row: any) => {
+       .map((row: Record<string, string>) => {
             const rawNum = row['Numéro'];
             const number = typeof rawNum === 'string' ? parseInt(rawNum.replace(/\D/g, '')) : parseInt(rawNum);
             
@@ -268,7 +268,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                         emission.imageUrl = data.pictures.extra_large || data.pictures.large;
                     }
                 }
-            } catch (err) { /* Fail silently */ }
+            } catch { /* Fail silently */ }
         }
 
         // B. ARCHIVE.ORG (Avec Bonus Mixcloud Legacy)
@@ -302,7 +302,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                             emission.listenCount = (emission.listenCount || 0) + data.play_count;
                         }
                     }
-                } catch (e) { /* Fail silently */ }
+                } catch { /* Fail silently */ }
             }
         }
         

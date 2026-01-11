@@ -75,4 +75,5 @@ npm run dev
 ### Commandes de Maintenance
 
 *   **Vérifier les types (TypeScript) :** `npm run typecheck`
-*   **Vérifier le code (Linting strict) :** `npm run lint:strict`
+*   **Vérifier la qualité du code (Lint) :** `npm run lint`
+*   **Simuler la mise en production (Build) :** `npm run build` (Inclut automatiquement la vérification Lint)

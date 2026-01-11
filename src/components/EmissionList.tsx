@@ -39,7 +39,8 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     if (emissionIdFromUrl) {
       const targetEmission = initialEmissions.find(e => e.number.toString() === emissionIdFromUrl);
       if (targetEmission) {
-        setSelectedEmission(targetEmission);
+        // setTimeout pour éviter l'erreur "synchronous setState"
+        setTimeout(() => setSelectedEmission(targetEmission), 0);
       }
     }
   }, [emissionIdFromUrl, initialEmissions]);
@@ -76,9 +77,10 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
 
   // Reset de la pagination quand les filtres changent (UX)
   useEffect(() => {
-    setVisibleCount(12);
-    // Optionnel : Scroll en haut de page si on veut
-    // window.scrollTo({ top: 0, behavior: 'smooth' });
+    // setTimeout pour éviter l'erreur "synchronous setState"
+    const timer = setTimeout(() => setVisibleCount(12), 0);
+
+    return () => clearTimeout(timer);
   }, [debouncedSearchTerm, selectedTag]);
 
   // Pagination : On coupe la liste pour n'afficher que les éléments visibles
@@ -103,72 +105,16 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) { }
+      } catch {
+      }
     } else {
       try {
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-      } catch (err) { }
+      } catch {
+      }
     }
-  };
-
-  // Sous-composant pour l'affichage de la playlist dans la modale
-  const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
-    const getGoogleSearchLink = (query: string) => {
-      return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
-    };
-
-    const getMusicBrainzRecordingLink = (artiste: string, titre: string) => {
-      const query = `${titre} AND artist:${artiste}`;
-      return `https://musicbrainz.org/search?query=${encodeURIComponent(query)}&type=recording`;
-    };
-
-    const getDiscogsSearchLink = (artiste: string, titre: string) => {
-      return `https://www.discogs.com/search/?q=${encodeURIComponent(`${artiste} - ${titre}`)}&type=all`;
-    };
-    return (
-      <div className="p-4 bg-white text-sm">
-        <h4 className="font-bold text-gray-800 mb-2 border-b pb-1">Playlist ({playlist.length} titres)</h4>
-        {playlist.length === 0 ? (
-          <p className="text-gray-500 italic">Playlist non disponible pour cette émission.</p>
-        ) : (
-          <ul className="space-y-0.5">
-            {playlist.map((item, index) => (
-              <li key={index} className="flex flex-col border-b border-gray-100 pb-1.5">
-
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 pr-2 text-gray-900">
-                    <a
-                      href={getGoogleSearchLink(item.artiste)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-blue-600 hover:underline"
-                      title={`Rechercher ${item.artiste} sur Google`}
-                    >
-                      {item.artiste}
-                    </a>
-                    <span className="text-gray-700"> - </span>
-                    <span className="text-gray-700">
-                      {item.titre}
-                    </span>
-                    {item.proposePar && <span className="text-gray-600 italic ml-1">({item.proposePar})</span>}
-                  </div>
-                  <div className="text-xs text-gray-600 flex-shrink-0 text-right font-mono">
-                    {item.startTime}
-                  </div>
-                </div>
-
-                <div className="mt-1 flex space-x-2 text-xs">
-                  <a href={getMusicBrainzRecordingLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher l'enregistrement sur MusicBrainz">[MusicBrainz]</a>
-                  <a href={getDiscogsSearchLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher sur Discogs (Marketplace)">[Discogs]</a>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -242,7 +188,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
           <div className="col-span-full text-center py-12 text-gray-600">
             <p className="text-xl font-semibold">Aucune émission trouvée.</p>
             {selectedTag && <p className="text-sm mt-2">Filtre actif : <span className="font-bold">{selectedTag}</span></p>}
-            {debouncedSearchTerm && <p className="text-sm mt-1">Recherche : "{debouncedSearchTerm}"</p>}
+            {debouncedSearchTerm && <p className="text-sm mt-1">Recherche : &quot;{debouncedSearchTerm}&quot;</p>}
           </div>
         )}
       </div>
@@ -254,7 +200,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             onClick={handleLoadMore}
             className="px-6 py-3 bg-black text-white font-bold rounded-full hover:bg-gray-800 transition-colors shadow-lg"
           >
-            Voir plus d'émissions ({filteredEmissions.length - visibleCount} restantes)
+            Voir plus d&apos;émissions ({filteredEmissions.length - visibleCount} restantes)
           </button>
         </div>
       )}
@@ -358,3 +304,61 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     </>
   );
 }
+
+// Sous-composant pour l'affichage de la playlist dans la modale
+const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
+  const getGoogleSearchLink = (query: string) => {
+    return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
+  };
+
+  const getMusicBrainzRecordingLink = (artiste: string, titre: string) => {
+    const query = `${titre} AND artist:${artiste}`;
+    return `https://musicbrainz.org/search?query=${encodeURIComponent(query)}&type=recording`;
+  };
+
+  const getDiscogsSearchLink = (artiste: string, titre: string) => {
+    return `https://www.discogs.com/search/?q=${encodeURIComponent(`${artiste} - ${titre}`)}&type=all`;
+  };
+  return (
+    <div className="p-4 bg-white text-sm">
+      <h4 className="font-bold text-gray-800 mb-2 border-b pb-1">Playlist ({playlist.length} titres)</h4>
+      {playlist.length === 0 ? (
+        <p className="text-gray-500 italic">Playlist non disponible pour cette émission.</p>
+      ) : (
+        <ul className="space-y-0.5">
+          {playlist.map((item, index) => (
+            <li key={index} className="flex flex-col border-b border-gray-100 pb-1.5">
+
+              <div className="flex justify-between items-start">
+                <div className="flex-1 pr-2 text-gray-900">
+                  <a
+                    href={getGoogleSearchLink(item.artiste)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-blue-600 hover:underline"
+                    title={`Rechercher ${item.artiste} sur Google`}
+                  >
+                    {item.artiste}
+                  </a>
+                  <span className="text-gray-700"> - </span>
+                  <span className="text-gray-700">
+                    {item.titre}
+                  </span>
+                  {item.proposePar && <span className="text-gray-600 italic ml-1">({item.proposePar})</span>}
+                </div>
+                <div className="text-xs text-gray-600 flex-shrink-0 text-right font-mono">
+                  {item.startTime}
+                </div>
+              </div>
+
+              <div className="mt-1 flex space-x-2 text-xs">
+                <a href={getMusicBrainzRecordingLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher l'enregistrement sur MusicBrainz">[MusicBrainz]</a>
+                <a href={getDiscogsSearchLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher sur Discogs (Marketplace)">[Discogs]</a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};

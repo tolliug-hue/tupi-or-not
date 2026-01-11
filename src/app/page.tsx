@@ -7,7 +7,7 @@ import { SocialLinks } from '@/components/SocialLinks';
 import MobileMenu from '@/components/MobileMenu';
 import Image from 'next/image';
 import { Suspense } from 'react';
-import { Metadata, ResolvingMetadata } from 'next';
+import { Metadata } from 'next';
 
 /**
  * Configuration ISR (Incremental Static Regeneration).
@@ -26,14 +26,34 @@ type Props = {
  */
 export async function generateMetadata(
   { searchParams }: Props,
-  parent: ResolvingMetadata
 ): Promise<Metadata> {
   
   const { id } = await searchParams;
+
+  // --- OPTIMISATION Page d'accueil ---
+  // Si aucun ID n'est demandé, on renvoie immédiatement les métadonnées par défaut.
+  // Cela évite d'attendre le chargement des données (getEmissions) pour la home.
+  if (!id) {
+    return {
+      title: 'Tupi or Not',
+      description: "L'émission qui mange toutes les musiques. Retrouvez toutes les archives, playlists et statistiques de l'émission diffusée sur Radio Octopus.",
+      alternates: {
+        canonical: 'https://tupiornot.fr',
+      },
+      openGraph: {
+        title: 'Tupi or Not',
+        description: "L'émission qui mange toutes les musiques",
+        url: 'https://tupiornot.fr',
+        type: 'website',
+      }
+    };
+  }
+
+  // --- Si on est ici, c'est qu'il y a un ID, donc on charge les données ---
   const { emissions } = await getEmissions();
 
   // Recherche de l'émission ciblée par l'URL
-  const emission = id ? emissions.find((e) => e.number.toString() === id) : null;
+  const emission = emissions.find((e) => e.number.toString() === id);
 
   // CAS 1 : Partage d'une émission spécifique
   if (emission && emission.imageUrl) {
@@ -53,7 +73,7 @@ export async function generateMetadata(
     };
   }
 
-  // CAS 2 : Page d'accueil par défaut
+  // CAS 2 : Fallback (si ID invalide ou introuvable)
   // On redéfinit les métadonnées ici car cette fonction remplace celle du layout
   return {
     title: 'Tupi or Not',
@@ -101,7 +121,7 @@ export default async function Home() {
                   TUPI OR NOT
                 </h1>
                 <p className="text-[10px] sm:text-xs text-gray-400 italic mt-0.5">
-                  L'émission qui mange toutes les musiques
+                  L&apos;émission qui mange toutes les musiques
                 </p>
               </div>
             </div>

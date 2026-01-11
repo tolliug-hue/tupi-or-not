@@ -53,27 +53,6 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
     }
   };
 
-  // Composant de rendu du nuage
-  const TagCloudContent = () => (
-    <div className="flex flex-wrap gap-1">
-      {activeTags.map((item, index) => (
-        item.tag.length > 0 && (
-          <button
-            key={index}
-            onClick={() => {
-                setSearchTerm(item.tag);
-            }}
-            style={{ fontSize: getFontSize(item.count) }}
-            className={`text-sm transition-colors font-semibold cursor-pointer leading-none ${colors.text} ${colors.bg} ${colors.hover} px-2 py-1 rounded-full`}
-            title={`${item.count} titres de ${item.tag}`}
-          >
-            {item.tag}
-          </button>
-        )
-      ))}
-    </div>
-  );
-
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       
@@ -118,10 +97,46 @@ export default function TagExplorer({ artistTags, genreTags }: { artistTags: Glo
         <div className="p-2">
           <div className="h-32 md:h-48 overflow-y-auto pr-1">
             {/* Rendu conditionnel. Si c'est fermé, React ne génère pas les centaines de boutons dans le DOM. */}
-            {isOpen && <TagCloudContent />}
+            {isOpen && (
+              <TagCloudContent 
+                activeTags={activeTags}
+                colors={colors}
+                setSearchTerm={setSearchTerm}
+                getFontSize={getFontSize}
+              />
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// Composant de rendu du nuage EXTRAIT (Pour éviter la re-création au render) ---
+
+type TagCloudProps = {
+  activeTags: GlobalTags[];
+  colors: { bg: string; text: string; hover: string };
+  setSearchTerm: (term: string) => void;
+  getFontSize: (count: number) => string;
+};
+
+const TagCloudContent = ({ activeTags, colors, setSearchTerm, getFontSize }: TagCloudProps) => (
+  <div className="flex flex-wrap gap-1">
+    {activeTags.map((item, index) => (
+      item.tag.length > 0 && (
+        <button
+          key={index}
+          onClick={() => {
+              setSearchTerm(item.tag);
+          }}
+          style={{ fontSize: getFontSize(item.count) }}
+          className={`text-sm transition-colors font-semibold cursor-pointer leading-none ${colors.text} ${colors.bg} ${colors.hover} px-2 py-1 rounded-full`}
+          title={`${item.count} titres de ${item.tag}`}
+        >
+          {item.tag}
+        </button>
+      )
+    ))}
+  </div>
+);
