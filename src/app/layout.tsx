@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SearchProvider } from '@/context/SearchContext';
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -74,6 +75,7 @@ export default function RootLayout({
         {/* Provider pour la gestion de l'état de recherche global */}
         <SearchProvider>
           {children}
+          <Analytics />
         </SearchProvider>
       </body>
     </html>

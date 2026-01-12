@@ -11,6 +11,8 @@ Le site est construit sur une architecture **Next.js/TypeScript/Tailwind** pour 
 
 Le code source est sous licence MIT.
 
+Le projet intègre une solution d'analyse d'audience (Vercel Analytics) respectueuse de la vie privée (sans cookies).
+
 ## 🔗 Configuration des Données (Back-Office)
 
 Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadsheets/d/1uleTx21WDbeTGSgiybSn3Uu0Zt5yqCyeD8B7KCS-vik/edit?usp=sharing) comme unique source de données. Toute modification dans ce fichier est répercutée sur le site.

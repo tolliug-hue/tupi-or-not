@@ -111,6 +111,9 @@ L'architecture de données a été découplée en deux fichiers distincts pour o
     *   **Indexation :** Génération automatique du `sitemap.xml` et du `robots.txt`.
     *   **Social Graph :** Implémentation du protocole Open Graph (Facebook/LinkedIn) et des Twitter Cards via les métadonnées dynamiques et l'image `opengraph-image.jpg` (File-based Metadata).
     *   **Canonical :** Protection contre le contenu dupliqué via la balise canonique.
+*   **Monitoring & Analytics :** Intégration de **Vercel Analytics** pour le suivi d'audience.
+    *   **Privacy-First :** La solution est configurée pour être conforme au RGPD sans nécessiter de bandeau de consentement (pas de cookies, données anonymisées, pas de suivi cross-site).
+    *   **Performance :** Script ultra-léger chargé de manière asynchrone pour ne pas impacter le score Lighthouse.
 
 ## 6. Viabilité & Limites (Plan Vercel Hobby)
 

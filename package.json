@@ -1,16 +1,17 @@
 {
   "name": "tupi-or-not",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "eslint . && next build", 
+    "build": "eslint . && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:strict": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "next": "16.0.10",
     "papaparse": "^5.5.3",
     "react": "19.2.1",
