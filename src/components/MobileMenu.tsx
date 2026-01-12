@@ -56,7 +56,7 @@ export default function MobileMenu() {
             className="flex items-center gap-3 group"
           >
             <div className="bg-white rounded-full p-1 group-hover:opacity-80 transition-opacity">
-               <Image src="/logo-octopus.png" alt="Logo" width={32} height={32} />
+               <Image src="/logo-octopus.png" alt="Logo" width={32} height={32} style={{ objectFit: 'contain' }} />
             </div>
             <span className="font-bold text-lg group-hover:text-blue-400 transition-colors">Radio Octopus</span>
           </a>

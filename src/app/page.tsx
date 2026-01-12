@@ -113,7 +113,7 @@ export default async function Home() {
               </div>
             {/* LOGO */}
               <a href="https://radio-octopus.org/" target="_blank" className="mr-3 shrink-0" style={{ filter: 'invert(1)' }}>
-                <Image src="/logo-octopus.png" alt="Logo" width={42} height={42} priority />
+                <Image src="/logo-octopus.png" alt="Logo" width={42} height={42} priority style={{ objectFit: 'contain' }} />
               </a>
               {/* TITRE */}
                <div className="flex flex-col">
