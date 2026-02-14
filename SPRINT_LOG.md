@@ -4,6 +4,7 @@ Ce document retrace les étapes de développement, les livrables et les défis t
 
 | Sprint | Objectif Principal | Livrables Clés | Défis Techniques Résolus |
 | :--- | :--- | :--- | :--- |
+| **39** | **Security (v1.0.7)** | Mise à jour critique Next.js | **Security :** Patch de sécurité Next.js (v16.1.6) pour corriger les vulnérabilités DoS. |
 | **38** | **Cleanup & Optimization (v1.0.6)** | Optimisation Images & Code Hardening. | **Vercel Quota :** Réduction des tailles d'images (`next.config.ts`) pour diviser par 3 la consommation de transformations.<br>**Robustesse :** Sécurisation du parsing de date dans `data.ts` et utilisation de `AbortSignal.timeout`.<br>**React 19 :** Suppression des `setTimeout` obsolètes (`EmissionList`) et stabilisation du `SearchContext` (`useCallback`).<br>**Clean Code :** Suppression du code mort (CSS variables, Browserslist). Passage en v1.0.6. |
 | **37** | **Analytics Integration** | Mise en place de Vercel Analytics. | **Monitoring :** Installation du paquet `@vercel/analytics` pour suivre l'audience (Visiteurs, Pages vues) directement depuis le dashboard Vercel, dans le respect de la vie privée (GDPR compliant, sans cookies). |
 | **36** | **Lighthouse Polish (v1.0.4)** | Correction du ratio d'aspect du logo. | **Best Practices :** Ajout de `object-fit: contain` sur les logos (Header et Menu Mobile) pour éviter la déformation et valider le score 100/100 "Best Practices" sur Lighthouse Desktop. |
