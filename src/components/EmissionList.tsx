@@ -10,17 +10,24 @@ import Image from 'next/image';
  * Composant principal affichant la grille des émissions et gérant la modale de lecture.
  */
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
-  const [selectedEmission, setSelectedEmission] = useState<Emission | null>(null);
+  // Récupération des paramètres d'URL (pour le Deep Linking)
+  const searchParams = useSearchParams();
+  const emissionIdFromUrl = searchParams.get('id');
+
+  // --- 1. INITIALISATION (Lazy State) ---
+  // On tente de récupérer l'émission dès le départ pour l'affichage initial (SSR/Hydration)
+  const [selectedEmission, setSelectedEmission] = useState<Emission | null>(() => {
+    if (emissionIdFromUrl) {
+      return initialEmissions.find(e => e.number.toString() === emissionIdFromUrl) || null;
+    }
+    return null;
+  });
 
   // Pagination : On commence par 12 éléments pour alléger le DOM initial
   const [visibleCount, setVisibleCount] = useState(12);
 
   // État pour le feedback du bouton partage
   const [isCopied, setIsCopied] = useState(false);
-
-  // Récupération des paramètres d'URL (pour le Deep Linking)
-  const searchParams = useSearchParams();
-  const emissionIdFromUrl = searchParams.get('id');
 
   // On récupère les valeurs optimisées du Context
   const { debouncedSearchTerm, selectedTag } = useSearch();
@@ -30,25 +37,42 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     return parts[parts.length - 1] || parts[parts.length - 2];
   };
 
-  const closeModal = () => {
-    setSelectedEmission(null);
+  // Fonction pour ouvrir une émission (Clic Carte)
+  const openEmission = (emission: Emission) => {
+    setSelectedEmission(emission);
+    // BONUS UX : On met à jour l'URL sans recharger la page
+    window.history.pushState(null, '', `?id=${emission.number}`);
   };
 
-  // Ouverture automatique de la modale si ?id=XX est dans l'URL
-  useEffect(() => {
-    if (emissionIdFromUrl) {
-      const targetEmission = initialEmissions.find(e => e.number.toString() === emissionIdFromUrl);
-      if (targetEmission) {
-        // setTimeout pour éviter l'erreur "synchronous setState"
-        setTimeout(() => setSelectedEmission(targetEmission), 0);
-      }
-    }
-  }, [emissionIdFromUrl, initialEmissions]);
+  // Fonction pour fermer
+  const closeModal = () => {
+    setSelectedEmission(null);
+    // On nettoie l'URL
+    window.history.pushState(null, '', window.location.pathname);
+  };
 
-  // --- LOGIQUE DE FILTRAGE OPTIMISÉE (MULTI-MOTS) ---
+
+  // --- 2. SYNCHRONISATION URL -> MODALE (Le Correctif) ---
+  useEffect(() => {
+    // On utilise setTimeout pour sortir du cycle de rendu synchrone.
+    // Cela corrige l'erreur "Calling setState synchronously within an effect".
+    const timer = setTimeout(() => {
+      if (emissionIdFromUrl) {
+        const target = initialEmissions.find(e => e.number.toString() === emissionIdFromUrl);
+        // On ne met à jour QUE si c'est différent (évite les boucles)
+         if (target && target.id !== selectedEmission?.id) {
+           setSelectedEmission(target);
+        }
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [emissionIdFromUrl, initialEmissions, selectedEmission]); // Dépendances complètes
+
+  // --- 3. LOGIQUE DE FILTRAGE ---
   const filteredEmissions = useMemo(() => {
     return initialEmissions.filter(emission => {
-      // 1. Filtre par Tag (si un tag est sélectionné via les boutons)
+      // 1. Filtre par Tag
       if (selectedTag && !emission.genres.some(g => g.toLowerCase() === selectedTag.toLowerCase())) {
         return false;
       }
@@ -75,11 +99,10 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     });
   }, [initialEmissions, debouncedSearchTerm, selectedTag]);
 
-  // Reset de la pagination quand les filtres changent (UX)
+  // --- 4. RESET PAGINATION Reset de la pagination quand les filtres changent (UX) ---
   useEffect(() => {
-    // setTimeout pour éviter l'erreur "synchronous setState"
+    // Ici aussi, setTimeout est nécessaire car debouncedSearchTerm change après le rendu
     const timer = setTimeout(() => setVisibleCount(12), 0);
-
     return () => clearTimeout(timer);
   }, [debouncedSearchTerm, selectedTag]);
 
@@ -90,7 +113,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     setVisibleCount((prev) => prev + 12);
   };
 
-  // La fonction de partage
+ // La fonction de partage
   const handleShareEmission = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêche de fermer la modale ou de cliquer ailleurs
     if (!selectedEmission) return;
@@ -98,21 +121,23 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     const shareData = {
       title: `Tupi or Not - ${selectedEmission.title}`,
       text: `Écoute l'émission ${selectedEmission.title} de Tupi or Not !`,
-      // On génère le lien avec l'ID
+            // On génère le lien avec l'ID
       url: `https://tupiornot.fr?id=${selectedEmission.number}`,
     };
 
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch {
+      } catch (err) {
+        console.warn('Share failed:', err);
       }
     } else {
       try {
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-      } catch {
+      } catch (err) {
+        console.warn('Clipboard failed:', err);
       }
     }
   };
@@ -129,7 +154,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             {/* BOUTON GLOBAL (Image + Texte). */}
             <button
               className="w-full h-full flex flex-col text-left focus:outline-none"
-              onClick={() => setSelectedEmission(emission)}
+              onClick={() => openEmission(emission)}
             >
               {/* ZONE VISUELLE */}
               <div className="aspect-square bg-gray-200 overflow-hidden relative w-full">
@@ -161,7 +186,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
               <div className="px-2 py-1 flex-1 flex flex-col w-full">
                 <div className="flex justify-between items-center mb-0.5">
                   <div className="text-xs font-bold text-gray-900">{emission.date}</div>
-                  {/* Compteur d'écoutes */}
+                   {/* Compteur d'écoutes */}
                   {emission.listenCount !== undefined && (
                     <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +218,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         )}
       </div>
 
-      {/* BOUTON "VOIR PLUS" */}
+       {/* BOUTON "VOIR PLUS" */}
       {visibleCount < filteredEmissions.length && (
         <div className="mt-8 flex justify-center pb-8">
           <button
@@ -214,7 +239,7 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
             onClick={(e) => e.stopPropagation()}
           >
 
-            {/* 1. HEADER (Fixe) */}
+             {/* 1. HEADER (Fixe) */}
             <div className="bg-gray-100 px-4 py-1 flex justify-between items-center border-b flex-shrink-0 z-10">
               <h3 className="font-bold text-lg text-gray-900 leading-tight pr-4">
                 {selectedEmission.title} - {selectedEmission.date}
@@ -231,13 +256,13 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                     // Icône Check (Succès)
                     <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   ) : (
-                    // ICÔNE bouton partager : Carré avec flèche (Identique au Header)
+                      // ICÔNE bouton partager : Carré avec flèche (Identique au Header)
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   )}
                 </button>
-                {/* BOUTON FERMER */}
+                 {/* BOUTON FERMER */}
                 <button onClick={closeModal} className="text-gray-800 hover:text-red-600 p-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -246,10 +271,10 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
 
             {/* 2. ZONE SCROLLABLE (Player + Playlist) */}
             <div className="overflow-y-auto flex-1 bg-white">
-
+              
               {/* ZONE PLAYER UNIFIÉE */}
               <div className="bg-black flex flex-col justify-center items-center w-full">
-
+                
                 {/* IMAGE MODALE */}
                 {selectedEmission.imageUrl && (
                   <div className="w-full h-48 bg-black relative border-b border-gray-800">
@@ -265,7 +290,6 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
 
                 {/* ZONE IFRAME LECTEUR */}
                 <div className="w-full h-[60px] flex items-center justify-center bg-black">
-
                   {selectedEmission.platform === 'mixcloud' ? (
                     <iframe
                       width="100%"
@@ -283,21 +307,19 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                       className="bg-black border-0"
                     ></iframe>
                   )}
-
                 </div>
               </div>
-
-              {/* PLAYLIST */}
+              
+               {/* PLAYLIST */}
               <PlaylistDisplay playlist={selectedEmission.playlist} />
             </div>
 
-            {/* 3. FOOTER (Fixe) */}
+             {/* 3. FOOTER (Fixe) */}
             <div className="p-4 text-center bg-gray-50 text-sm border-t flex-shrink-0 z-10">
               <a href={selectedEmission.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                 Voir la page originale sur {selectedEmission.platform === 'archive' ? 'Archive.org' : 'Mixcloud'}
               </a>
             </div>
-
           </div>
         </div>
       )}
@@ -346,7 +368,7 @@ const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
                   </span>
                   {item.proposePar && <span className="text-gray-600 italic ml-1">({item.proposePar})</span>}
                 </div>
-                <div className="text-xs text-gray-600 flex-shrink-0 text-right font-mono">
+                <div className="text-xs text-gray-600 flex-shrink-0 text-right font-normal tracking-tight tabular-nums">
                   {item.startTime}
                 </div>
               </div>

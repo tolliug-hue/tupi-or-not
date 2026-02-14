@@ -140,7 +140,7 @@ export default async function Home() {
                  <SocialLinks />
               </div>
                {/* Ligne 2 : Compteur */}
-              <div className="text-xs text-gray-300 font-mono">
+              <div className="text-xs text-gray-300 font-normal">
                 {emissions.length} émissions archivées
               </div>
             </div>

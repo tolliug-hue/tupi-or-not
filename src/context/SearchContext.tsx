@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useCallback } from 'react';
 
 interface SearchContextType {
   searchTerm: string;
@@ -30,12 +30,12 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [searchTerm]);
 
-  // 2. Reset global (utile pour un bouton "Tout effacer")
-  const resetFilters = () => {
+  // 2. Reset global (Optimisé avec useCallback)
+  const resetFilters = useCallback(() => {
     setSearchTerm('');
     setDebouncedSearchTerm('');
     setSelectedTag(null);
-  };
+  }, []);
 
   // 3. Memoization pour éviter les re-rendus inutiles du Provider
   const value = useMemo(() => ({
@@ -45,7 +45,7 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
     selectedTag,
     setSelectedTag,
     resetFilters
-  }), [searchTerm, debouncedSearchTerm, selectedTag]);
+  }), [searchTerm, debouncedSearchTerm, selectedTag, resetFilters]); // Ajout de resetFilters aux dépendances
 
   return (
     <SearchContext.Provider value={value}>

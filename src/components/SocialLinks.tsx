@@ -15,14 +15,16 @@ export const SocialLinks = () => {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch {
+      } catch (err) {
+         console.warn('Share failed:', err);
       }
     } else {
       try {
         await navigator.clipboard.writeText(shareData.url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } catch {
+      } catch (err) {
+         console.warn('Clipboard failed:', err);
       }
     }
   };

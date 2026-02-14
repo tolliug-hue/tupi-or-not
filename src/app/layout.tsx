@@ -4,7 +4,11 @@ import './globals.css';
 import { SearchProvider } from '@/context/SearchContext';
 import { Analytics } from "@vercel/analytics/next"
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter', // On crée la variable CSS
+  display: 'swap',
+});
 
 /**
  * Configuration globale des métadonnées (SEO & Social).

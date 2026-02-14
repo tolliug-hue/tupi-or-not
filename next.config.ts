@@ -1,16 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['lucide-react'], 
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash'],
-  },
 
   images: {
-    // MODIFICATION : Ajout de tailles très fines (180, 200, 360)
-    // Pour coller au plus près des 176px de la grille mobile
-    imageSizes: [48, 64, 96, 128, 180, 200, 256, 360, 384],
+    // OPTIMISATION VERCEL QUOTA :
+    // On ne garde que 4 tailles stratégiques.
+    // 180px (Mobile 2 colonnes), 256px (Tablette), 360px (Desktop), 384px (Max)
+    imageSizes: [180, 256, 360, 384],
     
+     // On garde les breakpoints standards
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
 
     remotePatterns: [

@@ -39,7 +39,7 @@ async function processInBatches<T>(items: T[], batchSize: number, task: (item: T
  */
 async function fetchCsv(url: string): Promise<Record<string, string>[]> {
     try {
-        // ISR : On ne re-fetch le CSV que toutes les heures
+         // ISR : On ne re-fetch le CSV que toutes les heures
         const res = await fetch(url, { next: { revalidate: CONFIG.REVALIDATE_CSV } }); 
         if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
         const csvText = await res.text();
@@ -141,7 +141,7 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
             });
         }
 
-        // Mapping Playlist
+         // Mapping Playlist
         if (!playlistsMap.has(number)) playlistsMap.set(number, []);
         playlistsMap.get(number)!.push(item);
 
@@ -170,15 +170,20 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
 
             const rawDate = row['Date'] || '';
             let dateSlug = '';
-            // Normalisation de la date pour les URLs
-            if (rawDate.includes('/')) {
-                const parts = rawDate.split('/');
-                if (parts.length === 3) {
-                    const day = parts[0].padStart(2, '0');
-                    const month = parts[1].padStart(2, '0');
-                    let year = parts[2];
-                    if (year.length === 2) year = '20' + year;
-                    dateSlug = `${day}-${month}-${year}`;
+            
+            // --- SÉCURISATION DU PARSING DATE ---
+            if (rawDate && rawDate.includes('/')) {
+                try {
+                    const parts = rawDate.split('/');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        let year = parts[2];
+                        if (year.length === 2) year = '20' + year;
+                        dateSlug = `${day}-${month}-${year}`;
+                    }
+                } catch (e) {
+                    console.warn(`Date parsing error for emission ${number}:`, e);
                 }
             }
 
@@ -251,15 +256,11 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
         if (emission.platform === 'mixcloud') {
             try {
                 const apiLink = emission.link.replace('www.mixcloud.com', 'api.mixcloud.com');
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MIXCLOUD);
                 
-                // IMPORTANT : Cache de 24h pour Mixcloud
                 const res = await fetch(apiLink, { 
-                    signal: controller.signal,
+                    signal: AbortSignal.timeout(CONFIG.TIMEOUT_MIXCLOUD),
                     next: { revalidate: CONFIG.REVALIDATE_API } 
                 });
-                clearTimeout(timeoutId);
                 
                 if (res.ok) {
                     const data = await res.json();
@@ -280,29 +281,26 @@ export async function getEmissions(): Promise<{ emissions: Emission[], globalTag
                 emission.listenCount = archiveStatsMap[archiveId];
             }
 
-            // 2. Stats Mixcloud Legacy (Si coché)
+            // 2. Stats Mixcloud Legacy (Si coché) - sécurisée
             if (emission.mixcloudLegacy) {
-                try {
-                    const dateSlug = emission.date.replace(/\//g, '-');
-                    const legacyUrl = `https://api.mixcloud.com/olivier-guillot2/tupi-or-not-${emission.number}-${dateSlug}/`;
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MIXCLOUD);
-                    
-                    // IMPORTANT : Cache de 24h ici aussi
-                    const res = await fetch(legacyUrl, { 
-                        signal: controller.signal,
-                        next: { revalidate: CONFIG.REVALIDATE_API }
-                    });
-                    clearTimeout(timeoutId);
+                const dateSlug = emission.date.replace(/\//g, '-');
+                if (dateSlug && dateSlug.length >= 8) {
+                    try {
+                        const legacyUrl = `https://api.mixcloud.com/olivier-guillot2/tupi-or-not-${emission.number}-${dateSlug}/`;
+                        
+                        const res = await fetch(legacyUrl, { 
+                            signal: AbortSignal.timeout(CONFIG.TIMEOUT_MIXCLOUD),
+                            next: { revalidate: CONFIG.REVALIDATE_API }
+                        });
 
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.play_count) {
-                            emission.listenCount = (emission.listenCount || 0) + data.play_count;
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.play_count) {
+                                emission.listenCount = (emission.listenCount || 0) + data.play_count;
+                            }
                         }
-                    }
-                } catch { /* Fail silently */ }
+                    } catch { /* Fail silently */ }
+                }
             }
         }
         
