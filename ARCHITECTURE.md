@@ -2,7 +2,14 @@
 
 ## 1. Schéma d'Architecture et Flux de Données
 
-Le projet suit une architecture **JAMstack** (JavaScript, APIs, Markup) optimisée par Next.js. Le flux de données est conçu pour maximiser la performance en chargeant les données une seule fois côté serveur.
+Le projet suit une architecture **JAMstack** (JavaScript, APIs, Markup) optimisée par Next.js 16. Le flux de données est conçu pour maximiser la performance en chargeant les données une seule fois côté serveur.
+
+**Évolutions notables en v1.1.0 :**
+L'application est désormais segmentée en deux zones via les **Route Groups** `(site)` et `(embed)`, mais partage une logique de données et de composants commune.
+
+*   **Route Groups :** Séparation des routes en `(site)` (avec Header/Footer) et `(embed)` (Layout nu).
+*   **Composant Partagé :** `EmissionPlayer.tsx` est désormais le composant central d'affichage, utilisé à la fois dans la Modale du site principal et comme page unique pour les Widgets externes.
+
 ```mermaid
 flowchart TD
     %% Définition des styles (Classes)
@@ -10,22 +17,29 @@ flowchart TD
     classDef server fill:#ccf,stroke:#333,stroke-width:2px;
     classDef client fill:#ffc,stroke:#333,stroke-width:2px;
 
-    subgraph Server ["Server Side (Next.js)"]
+    subgraph Server ["Server Side (Next.js Data Layer)"]
         %% :::source applique la classe 'source' au noeud A
         A["Google Sheets: Emissions/Playlists"]:::source -->|CSV Fetch| B("src/lib/data.ts: getEmissions")
         B --> C{"Data Processing:<br/>Ligation & Tag Counting"}
-        C --> D["src/app/page.tsx: Server Component"]:::server
+        
+        %% Branching vers les deux layouts
+        C --> D1["src/app/(site)/page.tsx<br/>(Main App Layout)"]:::server
+        C --> D2["src/app/(embed)/.../page.tsx<br/>(Widget API Layout)"]:::server
     end
 
-    subgraph Client ["Client Side (Browser)"]
-        D --> E["src/context/SearchContext.tsx"]:::client
-        D --> I["src/components/MobileMenu.tsx (Drawer)"]:::client
-        D --> J["src/components/AboutModal.tsx"]:::client
+    subgraph Client ["Client Side (Browser & Interactivity)"]
+        %% Flux Site Principal
+        D1 --> E["src/context/SearchContext.tsx"]:::client
+        D1 --> I["src/components/MobileMenu.tsx"]:::client
         E --> F["src/components/TagExplorer.tsx"]
         E --> G["src/components/EmissionList.tsx"]
-        F -->|setSearchTerm| E
-        G -->|useSearch| E
-        G --> H["iFrames: Mixcloud/Archive.org"]
+        
+        %% Flux Widget & Player Partagé
+        G -->|Modal Open| K["src/components/EmissionPlayer.tsx<br/>(Shared Component)"]:::client
+        D2 -->|Direct Render| K
+        
+        %% Sortie Finale
+        K --> H["iFrames: Mixcloud/Archive.org"]
     end
 ```
 

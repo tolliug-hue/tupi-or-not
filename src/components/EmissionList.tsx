@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Emission, PlaylistItem } from '@/lib/types';
+import { Emission } from '@/lib/types'; // PlaylistItem n'est plus nécessaire ici
 import { useSearch } from '@/context/SearchContext';
 import Image from 'next/image';
+import EmissionPlayer from './EmissionPlayer'; // IMPORT DU NOUVEAU COMPOSANT
 
 /**
- * Composant principal affichant la grille des émissions et gérant la modale de lecture.
+ * Composant principal affichant la grille des émissions
  */
 export default function EmissionList({ initialEmissions }: { initialEmissions: Emission[] }) {
   // Récupération des paramètres d'URL (pour le Deep Linking)
@@ -26,33 +27,28 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
   // Pagination : On commence par 12 éléments pour alléger le DOM initial
   const [visibleCount, setVisibleCount] = useState(12);
 
-  // État pour le feedback du bouton partage
+    // État pour le feedback du bouton partage
   const [isCopied, setIsCopied] = useState(false);
-
+  
   // On récupère les valeurs optimisées du Context
   const { debouncedSearchTerm, selectedTag } = useSearch();
 
-  const getArchiveId = (link: string) => {
-    const parts = link.split('/');
-    return parts[parts.length - 1] || parts[parts.length - 2];
-  };
 
   // Fonction pour ouvrir une émission (Clic Carte)
   const openEmission = (emission: Emission) => {
     setSelectedEmission(emission);
-    // BONUS UX : On met à jour l'URL sans recharger la page
+        // BONUS UX : On met à jour l'URL sans recharger la page
     window.history.pushState(null, '', `?id=${emission.number}`);
   };
 
   // Fonction pour fermer
   const closeModal = () => {
     setSelectedEmission(null);
-    // On nettoie l'URL
+        // On nettoie l'URL
     window.history.pushState(null, '', window.location.pathname);
   };
 
-
-  // --- 2. SYNCHRONISATION URL -> MODALE (Le Correctif) ---
+  // 2. SYNCHRONISATION URL -> MODALE
   useEffect(() => {
     // On utilise setTimeout pour sortir du cycle de rendu synchrone.
     // Cela corrige l'erreur "Calling setState synchronously within an effect".
@@ -60,19 +56,19 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
       if (emissionIdFromUrl) {
         const target = initialEmissions.find(e => e.number.toString() === emissionIdFromUrl);
         // On ne met à jour QUE si c'est différent (évite les boucles)
-         if (target && target.id !== selectedEmission?.id) {
+        if (target && target.id !== selectedEmission?.id) {
            setSelectedEmission(target);
         }
       }
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [emissionIdFromUrl, initialEmissions, selectedEmission]); // Dépendances complètes
+  }, [emissionIdFromUrl, initialEmissions, selectedEmission]);
 
-  // --- 3. LOGIQUE DE FILTRAGE ---
+  // 3. LOGIQUE DE FILTRAGE
   const filteredEmissions = useMemo(() => {
     return initialEmissions.filter(emission => {
-      // 1. Filtre par Tag
+            // 1. Filtre par Tag
       if (selectedTag && !emission.genres.some(g => g.toLowerCase() === selectedTag.toLowerCase())) {
         return false;
       }
@@ -82,16 +78,13 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         const lowerSearchText = emission.searchableText;
         // On découpe la recherche utilisateur en mots (ex: "Rock Beatles" -> ["rock", "beatles"])
         const searchTerms = debouncedSearchTerm
-          .toLowerCase()
-          .split(' ')
-          .filter(term => term.trim() !== ''); // On enlève les espaces vides
-
+        .toLowerCase()
+        .split(' ')
+        .filter(term => term.trim() !== ''); // On enlève les espaces vides
+        
         // On vérifie que CHAQUE mot tapé est présent dans le texte de l'émission
         // .every() renvoie true seulement si toutes les conditions sont remplies
-        const matchesAllTerms = searchTerms.every(term =>
-          lowerSearchText.includes(term)
-        );
-        if (!matchesAllTerms) {
+        if (!searchTerms.every(term => lowerSearchText.includes(term))) {
           return false;
         }
       }
@@ -101,30 +94,30 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
 
   // --- 4. RESET PAGINATION Reset de la pagination quand les filtres changent (UX) ---
   useEffect(() => {
-    // Ici aussi, setTimeout est nécessaire car debouncedSearchTerm change après le rendu
+        // Ici aussi, setTimeout est nécessaire car debouncedSearchTerm change après le rendu
     const timer = setTimeout(() => setVisibleCount(12), 0);
     return () => clearTimeout(timer);
   }, [debouncedSearchTerm, selectedTag]);
 
-  // Pagination : On coupe la liste pour n'afficher que les éléments visibles
+// Pagination : On coupe la liste pour n'afficher que les éléments visibles
   const displayedEmissions = filteredEmissions.slice(0, visibleCount);
-
+  
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + 12);
   };
 
- // La fonction de partage
+  // La fonction de partage
   const handleShareEmission = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêche de fermer la modale ou de cliquer ailleurs
     if (!selectedEmission) return;
-
+    
     const shareData = {
       title: `Tupi or Not - ${selectedEmission.title}`,
       text: `Écoute l'émission ${selectedEmission.title} de Tupi or Not !`,
-            // On génère le lien avec l'ID
+                 // On génère le lien avec l'ID
       url: `https://tupiornot.fr?id=${selectedEmission.number}`,
     };
-
+   
     if (navigator.share) {
       try {
         await navigator.share(shareData);
@@ -138,25 +131,25 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
         setTimeout(() => setIsCopied(false), 2000);
       } catch (err) {
         console.warn('Clipboard failed:', err);
-      }
+       }
     }
   };
 
   return (
     <>
-      {/* GRILLE DES ÉMISSIONS */}
+   {/* GRILLE DES ÉMISSIONS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
         {displayedEmissions.map((emission, index) => (
           <article
             key={emission.id}
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 flex flex-col group"
           >
-            {/* BOUTON GLOBAL (Image + Texte). */}
+             {/* BOUTON GLOBAL (Image + Texte). */}
             <button
               className="w-full h-full flex flex-col text-left focus:outline-none"
               onClick={() => openEmission(emission)}
-            >
-              {/* ZONE VISUELLE */}
+            >              
+            {/* ZONE VISUELLE */}
               <div className="aspect-square bg-gray-200 overflow-hidden relative w-full">
                 {emission.imageUrl ? (
                   <Image
@@ -182,11 +175,11 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
                   </div>
                 </div>
               </div>
-              {/* TEXTE */}
+               {/* TEXTE */}
               <div className="px-2 py-1 flex-1 flex flex-col w-full">
                 <div className="flex justify-between items-center mb-0.5">
                   <div className="text-xs font-bold text-gray-900">{emission.date}</div>
-                   {/* Compteur d'écoutes */}
+                  {/* Compteur d'écoutes */}
                   {emission.listenCount !== undefined && (
                     <div className="flex items-center text-[10px] font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full ml-2" title={`${emission.listenCount} écoutes`}>
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,52 +262,12 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
               </div>
             </div>
 
-            {/* 2. ZONE SCROLLABLE (Player + Playlist) */}
+            {/* C'EST ICI QUE ÇA CHANGE : On utilise le composant Player */}
             <div className="overflow-y-auto flex-1 bg-white">
-              
-              {/* ZONE PLAYER UNIFIÉE */}
-              <div className="bg-black flex flex-col justify-center items-center w-full">
-                
-                {/* IMAGE MODALE */}
-                {selectedEmission.imageUrl && (
-                  <div className="w-full h-48 bg-black relative border-b border-gray-800">
-                    <Image
-                      src={selectedEmission.imageUrl}
-                      alt={selectedEmission.title}
-                      fill
-                      className="object-contain"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                )}
-
-                {/* ZONE IFRAME LECTEUR */}
-                <div className="w-full h-[60px] flex items-center justify-center bg-black">
-                  {selectedEmission.platform === 'mixcloud' ? (
-                    <iframe
-                      width="100%"
-                      height="60"
-                      src={`https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&hide_artwork=1&feed=${encodeURIComponent(selectedEmission.link)}`}
-                      allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share"
-                      className="bg-black border-0"
-                    ></iframe>
-                  ) : (
-                    <iframe
-                      src={`https://archive.org/embed/${getArchiveId(selectedEmission.link)}`}
-                      width="100%"
-                      height="30"
-                      allow="encrypted-media; fullscreen; autoplay; picture-in-picture"
-                      className="bg-black border-0"
-                    ></iframe>
-                  )}
-                </div>
-              </div>
-              
-               {/* PLAYLIST */}
-              <PlaylistDisplay playlist={selectedEmission.playlist} />
+               <EmissionPlayer emission={selectedEmission} />
             </div>
 
-             {/* 3. FOOTER (Fixe) */}
+                        {/* 3. FOOTER (Fixe) */}
             <div className="p-4 text-center bg-gray-50 text-sm border-t flex-shrink-0 z-10">
               <a href={selectedEmission.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                 Voir la page originale sur {selectedEmission.platform === 'archive' ? 'Archive.org' : 'Mixcloud'}
@@ -326,61 +279,3 @@ export default function EmissionList({ initialEmissions }: { initialEmissions: E
     </>
   );
 }
-
-// Sous-composant pour l'affichage de la playlist dans la modale
-const PlaylistDisplay = ({ playlist }: { playlist: PlaylistItem[] }) => {
-  const getGoogleSearchLink = (query: string) => {
-    return `https://www.google.com/search?q=${encodeURIComponent(query + ' artiste musique')}`;
-  };
-
-  const getMusicBrainzRecordingLink = (artiste: string, titre: string) => {
-    const query = `${titre} AND artist:${artiste}`;
-    return `https://musicbrainz.org/search?query=${encodeURIComponent(query)}&type=recording`;
-  };
-
-  const getDiscogsSearchLink = (artiste: string, titre: string) => {
-    return `https://www.discogs.com/search/?q=${encodeURIComponent(`${artiste} - ${titre}`)}&type=all`;
-  };
-  return (
-    <div className="p-4 bg-white text-sm">
-      <h4 className="font-bold text-gray-800 mb-2 border-b pb-1">Playlist ({playlist.length} titres)</h4>
-      {playlist.length === 0 ? (
-        <p className="text-gray-500 italic">Playlist non disponible pour cette émission.</p>
-      ) : (
-        <ul className="space-y-0.5">
-          {playlist.map((item, index) => (
-            <li key={index} className="flex flex-col border-b border-gray-100 pb-1.5">
-
-              <div className="flex justify-between items-start">
-                <div className="flex-1 pr-2 text-gray-900">
-                  <a
-                    href={getGoogleSearchLink(item.artiste)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-blue-600 hover:underline"
-                    title={`Rechercher ${item.artiste} sur Google`}
-                  >
-                    {item.artiste}
-                  </a>
-                  <span className="text-gray-700"> - </span>
-                  <span className="text-gray-700">
-                    {item.titre}
-                  </span>
-                  {item.proposePar && <span className="text-gray-600 italic ml-1">({item.proposePar})</span>}
-                </div>
-                <div className="text-xs text-gray-600 flex-shrink-0 text-right font-normal tracking-tight tabular-nums">
-                  {item.startTime}
-                </div>
-              </div>
-
-              <div className="mt-1 flex space-x-2 text-xs">
-                <a href={getMusicBrainzRecordingLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher l'enregistrement sur MusicBrainz">[MusicBrainz]</a>
-                <a href={getDiscogsSearchLink(item.artiste, item.titre)} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline" title="Rechercher sur Discogs (Marketplace)">[Discogs]</a>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};

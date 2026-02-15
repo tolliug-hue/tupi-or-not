@@ -52,6 +52,33 @@ Le site utilise un Google Sheet [Tupi archive](https://docs.google.com/spreadshe
 *   **Logo :** Le logo de **Radio Octopus** est intégré au bandeau pour marquer l'identité de l'émission.
 *   **Design :** Interface sombre et élégante, entièrement responsive (Mobile-First).
 
+## 📻 Widget & Intégration (Radio Octopus)
+
+Le site propose une API de widgets ("Embed") permettant d'afficher le lecteur Tupi or Not sur des sites tiers via une `iframe`.
+Ces pages sont optimisées pour l'intégration (pas de header, fond transparent, pas d'indexation Google).
+
+### Endpoints Disponibles
+
+| URL | Description | Usage |
+| :--- | :--- | :--- |
+| `/embed/latest` | Affiche automatiquement la **dernière émission** publiée. | Page d'accueil Radio Octopus. |
+| `/embed/[id]` | Affiche une émission spécifique (ex: `/embed/72`). | Articles de blog, archives spécifiques. |
+
+### Code d'intégration (HTML)
+
+Pour intégrer la dernière émission sur un site tiers :
+
+```html
+<iframe 
+  src="https://tupiornot.fr/embed/latest" 
+  width="100%" 
+  height="450" 
+  frameborder="0" 
+  allow="autoplay; encrypted-media"
+  style="border-radius: 8px; overflow: hidden;"
+></iframe>
+```
+
 ## 🛠️ Guide de Démarrage Local
 
 ### Prérequis
